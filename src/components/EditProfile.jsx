@@ -26,7 +26,7 @@ const EditProfile = ({ user }) => {
       const res = await axios.patch(
         `${BASE_URL}/profile/edit`,
         { firstName, lastName, photoUrl, age, gender, about, skills },
-        { withCredentials: false }
+        { withCredentials: true }
       );
       dispatch(addUser(res?.data?.data));
       setShowToast(true);
@@ -184,7 +184,7 @@ const EditProfile = ({ user }) => {
       </div>
 
       {showToast && (
-        <div className="toast toast-top toast-center transition-opacity duration-300 ease-in">
+        <div className="toast toast-bottom toast-center transition-opacity duration-300 ease-in">
           <div className="alert alert-success">
             <span>Profile updated successfully!</span>
           </div>
