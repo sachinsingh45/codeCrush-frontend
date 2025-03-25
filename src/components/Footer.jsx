@@ -9,7 +9,7 @@ const Footer = () => {
         <div className="flex flex-col items-center md:items-start space-y-4 md:space-y-0">
           <Link to="/" className="btn btn-ghost text-xl">
             <div className="flex items-center">
-              <div className="w-8">
+              <div className="w-6 mx-2">
                 <img alt="user photo" src="/logo.png" />
               </div>
               CodeCrush

@@ -29,7 +29,7 @@ const NavBar = () => {
       <div className="flex-1">
         <Link to="/" className="btn btn-ghost text-xl">
           <div className="flex items-center">
-            <div className="w-10">
+            <div className="w-6 mx-2">
               <img alt="user photo" src="/logo.png" className="w-full" />
             </div>
             CodeCrush
