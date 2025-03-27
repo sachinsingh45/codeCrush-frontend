@@ -41,18 +41,20 @@ const Requests = () => {
   if (!requests) return null;
 
   return (
-    <div className="flex flex-col items-center my-10 ">
-      <h1 className="font-bold text-white text-4xl mb-6">Connection Requests</h1>
+    <div className="flex flex-col items-center my-10 px-4">
+      <h1 className="font-bold text-base-content text-3xl sm:text-4xl mb-6 text-center">
+        Connection Requests
+      </h1>
 
       {requests.length === 0 ? (
-        <div className="flex flex-col items-center bg-base-300 p-8 rounded-lg shadow-lg w-96">
-          <FaRegSadTear className="text-6xl text-gray-500 mb-4" />
-          <h2 className="text-xl text-gray-400 mb-2">No Connection Requests Yet</h2>
-          <p className="text-gray-500 text-sm text-center mb-6">
+        <div className="flex flex-col items-center bg-base-300 p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-md text-center">
+          <FaRegSadTear className="text-5xl sm:text-6xl text-base-content mb-4" />
+          <h2 className="text-lg sm:text-xl text-base-content mb-2">No Connection Requests Yet</h2>
+          <p className="text-base-content text-sm sm:text-base mb-6">
             Stay active and explore more people to connect with!
           </p>
           <Link to="/">
-            <button className="btn btn-primary px-6 py-2 text-lg rounded-lg">
+            <button className="btn btn-primary px-4 sm:px-6 py-2 text-base sm:text-lg rounded-lg">
               Explore More
             </button>
           </Link>
@@ -65,34 +67,38 @@ const Requests = () => {
             return (
               <div
                 key={_id}
-                className="flex items-center bg-base-300 p-5 rounded-lg shadow-lg mb-5 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
+                className="flex flex-col sm:flex-row items-center bg-base-300 p-4 sm:p-5 rounded-lg shadow-lg mb-4 sm:mb-5 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] text-center sm:text-left"
               >
                 {/* Profile Image */}
                 <img
                   alt="Profile"
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-primary"
+                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-primary"
                   src={photoUrl || "https://via.placeholder.com/80"}
                 />
 
                 {/* User Details */}
-                <div className="flex-1 text-left mx-4">
-                  <h2 className="font-semibold text-lg md:text-xl text-white">
+                <div className="flex-1 mx-4 mt-3 sm:mt-0">
+                  <h2 className="font-semibold text-lg sm:text-xl text-base-content">
                     {firstName} {lastName}
                   </h2>
-                  {age && gender && <p className="text-gray-300">{age}, {gender}</p>}
-                  <p className="text-gray-400 text-sm md:text-base mt-1">{about || "No details available."}</p>
+                  {age && gender && (
+                    <p className="text-sm sm:text-base text-base-content">{age}, {gender}</p>
+                  )}
+                  <p className="text-xs sm:text-sm md:text-base text-base-content mt-1">
+                    {about || "No details available."}
+                  </p>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-3 sm:mt-0">
                   <button
-                    className="btn btn-error flex items-center gap-2 px-4 py-2"
+                    className="btn btn-error flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base"
                     onClick={() => reviewRequest("rejected", _id)}
                   >
                     <FaUserTimes /> Reject
                   </button>
                   <button
-                    className="btn btn-success flex items-center gap-2 px-4 py-2"
+                    className="btn btn-success flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base"
                     onClick={() => reviewRequest("accepted", _id)}
                   >
                     <FaUserPlus /> Accept

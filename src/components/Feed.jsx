@@ -49,11 +49,11 @@ const Feed = () => {
           alt="No users found"
           className="w-52 h-52 mb-4 opacity-90"
         />
-        <h1 className="text-2xl font-semibold text-gray-400 flex items-center gap-2">
+        <h1 className="text-2xl font-semibold text-base-content flex items-center gap-2">
           <MdPersonSearch className="text-3xl text-blue-500" />
           No new users found!
         </h1>
-        <p className="text-gray-300 mb-4 text-center">
+        <p className="text-base-content mb-4 text-center">
           It seems a bit quiet here... Try refreshing to see if there are new
           users!
         </p>

@@ -23,37 +23,39 @@ const UserCard = ({ user }) => {
 
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
+      whileHover={{ scale: 1.02, boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.1)" }}
       whileTap={{ scale: 0.98 }}
-      className="flex flex-col sm:flex-row bg-gradient-to-br from-white to-gray-400 shadow-lg rounded-xl overflow-hidden w-full max-w-xl transition-all duration-300"
+      className="flex flex-col lg:flex-row mx-4 lg:mx-auto bg-base-200 shadow-xl rounded-3xl overflow-hidden w-full max-w-3xl transition-all duration-300"
     >
       {/* Profile Picture */}
-      <div className="w-full sm:w-2/5 flex justify-center items-center bg-gray-200 relative">
+      <div className="w-full lg:w-2/5 flex justify-center items-center bg-gradient-to-br from-base-300 to-base-100 relative">
         <img
           src={photoUrl}
           alt="User"
-          className="w-full sm:h-full object-cover rounded-t-xl sm:rounded-none sm:rounded-l-xl transition-transform duration-300 transform hover:scale-105"
+          className="w-full lg:h-full object-cover rounded-t-3xl lg:rounded-none lg:rounded-l-3xl transition-transform duration-300 transform hover:scale-105"
         />
       </div>
 
       {/* Details */}
-      <div className="w-full sm:w-3/5 p-4 sm:p-6 flex flex-col justify-between">
+      <div className="w-full lg:w-3/5 p-6 lg:p-10 flex flex-col justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-1">
+          <h2 className="text-3xl font-bold text-base-content mb-2 tracking-wide">
             {firstName} {lastName}
           </h2>
           {age && gender && (
-            <p className="text-gray-600 text-sm">{age} • {gender}</p>
+            <p className="text-sm text-base-content opacity-70">{age} • {gender}</p>
           )}
-          <p className="text-gray-500 mt-3 text-sm leading-relaxed">{about}</p>
+          <p className="text-base-content text-sm opacity-80 mt-4 leading-relaxed">
+            {about || "No details available."}
+          </p>
 
           {/* Skills */}
           {skills.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-2">
               {skills.map((skill, index) => (
                 <span
                   key={index}
-                  className="bg-indigo-100 text-indigo-600 text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
+                  className="badge badge-primary bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md"
                 >
                   {skill}
                 </span>
@@ -63,11 +65,11 @@ const UserCard = ({ user }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-6 justify-start sm:justify-start">
+        <div className="flex flex-wrap gap-4 mt-6">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-5 py-2 text-sm font-semibold rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all shadow-md"
+            className="btn btn-outline btn-wide border-2 transition-all"
             onClick={() => handleSendRequest("ignored", _id)}
           >
             Ignore
@@ -75,7 +77,7 @@ const UserCard = ({ user }) => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-5 py-2 text-sm font-semibold rounded-md bg-indigo-500 text-white hover:bg-indigo-600 transition-all shadow-md"
+            className="btn btn-primary btn-wide transition-all shadow-md"
             onClick={() => handleSendRequest("interested", _id)}
           >
             Interested

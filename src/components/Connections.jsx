@@ -30,18 +30,18 @@ const Connections = () => {
   }, []);
 
   if (!connections)
-    return <h1 className="text-center text-white">Loading...</h1>;
+    return <h1 className="text-center text-base-content">Loading...</h1>;
 
   if (connections.length === 0)
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-white text-center">
+      <div className="flex flex-col items-center justify-center h-screen text-center text-base-content">
         <img
           src="https://cdn-icons-png.flaticon.com/512/4076/4076581.png"
           alt="No Connections"
           className="w-48 h-48 mb-6 opacity-90"
         />
         <h1 className="text-3xl font-semibold mb-2">No Connections Yet!</h1>
-        <p className="text-gray-300 mb-6">
+        <p className="	text-base-content mb-6">
           Start exploring and connect with amazing people.
         </p>
         <Link to="/">
@@ -54,7 +54,7 @@ const Connections = () => {
 
   return (
     <div className="text-center my-10 px-4 md:px-10">
-      <h1 className="font-bold text-white text-3xl">Connections</h1>
+      <h1 className="font-bold text-3xl text-base-content">Connections</h1>
 
       <div className="w-full flex flex-wrap justify-center gap-6 mt-6">
         {connections.map((connection) => {
@@ -75,15 +75,15 @@ const Connections = () => {
 
               {/* User Details */}
               <div className="text-left mx-4 flex-1">
-                <h2 className="font-bold text-xl text-white">
+                <h2 className="font-bold text-xl text-base-content">
                   {firstName} {lastName}
                 </h2>
                 {age && gender && (
-                  <p className="text-gray-300">
+                  <p className="	text-base-content">
                     {age}, {gender}
                   </p>
                 )}
-                <p className="text-gray-400 text-sm mt-1">
+                <p className="	text-base-content text-sm mt-1">
                   {about || "No details available."}
                 </p>
               </div>
