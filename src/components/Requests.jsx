@@ -41,7 +41,7 @@ const Requests = () => {
   if (!requests) return null;
 
   return (
-    <div className="flex flex-col items-center my-10 px-4">
+    <div className="mt-20 flex flex-col items-center my-10 px-4">
       <h1 className="font-bold text-base-content text-3xl sm:text-4xl mb-6 text-center">
         Connection Requests
       </h1>

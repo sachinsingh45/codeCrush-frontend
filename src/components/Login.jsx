@@ -46,7 +46,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center">
+    <div className="mt-20 flex justify-center items-center">
       <div className="flex flex-col lg:flex-row w-full max-w-screen-lg rounded-lg gap-4 justify-center">
         {/* Left side - Image */}
         {isLoginForm && (

@@ -93,7 +93,11 @@ const Chat = () => {
     });
     setNewMessage("");
   };
-
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      sendMessage(); 
+    }
+  };
   const getConnectionName = (selectedUserId) => {
     if (Array.isArray(connections) && connections.length > 0) {
       const selectedConnection = connections.find((c) => c._id === selectedUserId);
@@ -198,9 +202,9 @@ const Chat = () => {
               onChange={(e) => setNewMessage(e.target.value)}
               className="flex-1 border border-gray-500 text-grey rounded p-2"
               placeholder="Type a message..."
-              onClick={sendMessage}
+              onKeyDown={handleKeyDown}
             />
-            <button  onKeyDown={sendMessage} className="btn btn-primary">
+            <button   onClick={sendMessage} className="btn btn-primary">
               Send
             </button>
           </div>

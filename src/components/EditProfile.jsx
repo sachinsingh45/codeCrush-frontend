@@ -53,7 +53,7 @@ const EditProfile = ({ user }) => {
   };
 
   return (
-    <div className="flex flex-col items-center my-10">
+    <div className="mt-20 flex flex-col items-center mb-10">
       <div className="card bg-base-300 w-96 shadow-xl p-6">
         <h2 className="text-xl font-bold text-center mb-4">Edit Profile</h2>
         <div className="space-y-3">
@@ -144,7 +144,7 @@ const EditProfile = ({ user }) => {
                 onChange={(e) => setNewSkill(e.target.value)}
               />
               <button
-                className="btn btn-primary px-4 py-2"
+                className="btn btn-secondary px-4 py-2"
                 onClick={handleAddSkill}
               >
                 Add
