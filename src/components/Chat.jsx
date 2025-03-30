@@ -109,7 +109,7 @@ const Chat = () => {
   };
 
   return (
-    <div className={`w-full h-screen flex bg-base-200 ${isSidebarOpen ? "fixed" : "relative"}`}>
+    <div className={`w-full h-3/4 flex bg-base-200 ${isSidebarOpen ? "fixed" : "relative"}`}>
       <button
         className="absolute top-4 left-4 sm:hidden z-9 bg-gray-700 text-white p-2 rounded-md"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -143,7 +143,7 @@ const Chat = () => {
               </div>
             ))
           ) : (
-            <div className="flex flex-col items-center justify-center h-screen text-center text-base-content">
+            <div className="flex flex-col items-center justify-center h-3/4 text-center text-base-content">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/4076/4076581.png"
                 alt="No Connections"
@@ -161,7 +161,7 @@ const Chat = () => {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col w-full sm:w-3/4 p-2 overflow-y-scroll h-[calc(100vh-50px)]">
+      <div className="flex-1 flex flex-col w-full sm:w-3/4 p-2 overflow-y-scroll h-[calc(100vh-100px)] md:h-[calc(100vh-50px)]">
         <div className="p-4 border-b border-gray-600 bg-base-200 flex items-center justify-center">
           <h1 className="text-lg font-semibold">
             {selectedUserId ? getConnectionName(selectedUserId) : "Select a Connection"}
