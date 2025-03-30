@@ -83,6 +83,9 @@ const NavBar = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/chats">Inbox</Link>
+              </li>
+              <li>
                 <Link to="/connections">Connections</Link>
               </li>
               <li>

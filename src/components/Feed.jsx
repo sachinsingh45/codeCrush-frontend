@@ -43,7 +43,7 @@ const Feed = () => {
 
   if (feed.length <= 0) {
     return (
-      <div className="flex flex-col items-center justify-center my-10 p-6 rounded-xl">
+      <div className="mt-20 flex flex-col items-center justify-center mb-10 p-6 rounded-xl">
         <img
           src="/empty-feed.png"
           alt="No users found"

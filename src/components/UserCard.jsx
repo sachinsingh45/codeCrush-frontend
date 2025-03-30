@@ -25,7 +25,7 @@ const UserCard = ({ user }) => {
     <motion.div
       whileHover={{ scale: 1.02, boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.1)" }}
       whileTap={{ scale: 0.98 }}
-      className="flex flex-col lg:flex-row mx-4 lg:mx-auto bg-base-200 shadow-xl rounded-3xl overflow-hidden w-full max-w-3xl transition-all duration-300"
+      className="mt-10 flex flex-col lg:flex-row mx-4 lg:mx-auto bg-base-200 shadow-xl rounded-3xl overflow-hidden w-full max-w-3xl transition-all duration-300"
     >
       {/* Profile Picture */}
       <div className="w-full lg:w-2/5 flex justify-center items-center bg-gradient-to-br from-base-300 to-base-100 relative">

@@ -34,7 +34,7 @@ const Body = () => {
   return (
     <div>
       <NavBar />
-      <div className="mt-20 min-h-screen">
+      <div className="mt-16 min-h-[66vh]">
 
       <Outlet />
       </div>
