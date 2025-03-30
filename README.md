@@ -22,8 +22,8 @@ CodeCrush is a platform where coders and developers can **connect and communicat
 ## Installation & Setup 🛠️
 ```bash
 # Clone the frontend repository
-git clone https://github.com/your-username/codecrush-frontend.git
-cd codecrush-frontend
+git clone https://github.com/sachinsingh45/codeCrush-frontend.git
+cd codeCrush-frontend
 
 # Install dependencies
 npm install
