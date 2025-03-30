@@ -52,7 +52,7 @@ npm run dev
 ```
 
 ## Usage ⚡
-1. Ensure the **backend server** is running.
+1. Ensure the **backend server** is running. [CodeCrush-backend](https://github.com/sachinsingh45/codeCrush)
 2. Start the **frontend** using `npm run dev`.
 3. Open `http://localhost:5173/` (or the specified Vite port) in your browser.
 4. Create an account and start **connecting with other developers**!
