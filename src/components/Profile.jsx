@@ -99,19 +99,18 @@ const Profile = () => {
                   <img src={blog.featuredImage} alt={blog.title} className="w-full h-32 object-cover transition-transform group-hover:scale-105 duration-300" />
                 )}
                 <div className="p-4 sm:p-5 flex flex-col h-full">
-                <div className="p-5 flex flex-col h-full">
                   <div className="flex flex-wrap gap-2 mb-2">
                     {blog.tags.map((tag) => (
                       <span key={tag} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded text-xs font-semibold tracking-wide">#{tag}</span>
                     ))}
                   </div>
-                  <h3 className="text-xl font-bold mb-1 line-clamp-2 text-gray-900 dark:text-base-content">{blog.title}</h3>
+                  <h3 className="text-lg sm:text-xl font-bold mb-1 line-clamp-2 text-gray-900 dark:text-white">{blog.title}</h3>
                   <div className="flex items-center gap-3 mb-2">
                     <img src={user.photoUrl} alt={user.firstName} className="w-8 h-8 rounded-full border-2 border-blue-400 dark:border-blue-700" />
-                    <span className="text-base font-medium text-gray-800 dark:text-base-content">{user.firstName} {user.lastName}</span>
-                    <span className="text-xs text-gray-400 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
+                    <span className="text-base font-medium text-gray-800 dark:text-white">{user.firstName} {user.lastName}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-3 mb-2">
+                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 pt-3 mb-2">
                     <span title="Likes" className="flex items-center gap-1"><span role="img" aria-label="like">👍</span> {blog.likeCount || 0}</span>
                     <span title="Comments" className="flex items-center gap-1"><span role="img" aria-label="comments">💬</span> {blog.commentCount || 0}</span>
                     <span title="Shares" className="flex items-center gap-1"><span role="img" aria-label="shares">🔗</span> {blog.shareCount || 0}</span>
@@ -130,7 +129,6 @@ const Profile = () => {
                     >
                       View
                     </button>
-                    {/* Delete button can be added here */}
                   </div>
                 </div>
               </div>
