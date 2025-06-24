@@ -8,6 +8,13 @@ import Feed from "./components/Feed";
 import Connections from "./components/Connections";
 import Requests from "./components/Requests";
 import Chat from "./components/Chat";
+import BlogDetails from "./components/BlogDetails";
+import CreateBlog from "./components/CreateBlog";
+import EditBlog from "./components/EditBlog";
+import TrendingBlogs from "./components/TrendingBlogs";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import DiscoverUsers from "./components/DiscoverUsers";
 
 function App() {
   return (
@@ -23,9 +30,15 @@ function App() {
               <Route path="/requests" element={<Requests />} />
               <Route path="/chats" element={<Chat />} />
               <Route path="/chat/:targetUserId" element={<Chat />} />
+              <Route path="/blogs/:id" element={<BlogDetails />} />
+              <Route path="/create-blog" element={<CreateBlog />} />
+              <Route path="/edit-blog/:id" element={<EditBlog />} />
+              <Route path="/trending" element={<TrendingBlogs />} />
+              <Route path="/discover" element={<DiscoverUsers />} />
             </Route>
           </Routes>
         </BrowserRouter>
+        <ToastContainer position="top-right" autoClose={3000} />
       </Provider>
     </>
   );

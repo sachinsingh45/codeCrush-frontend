@@ -49,6 +49,12 @@ const NavBar = () => {
 
       {user && (
         <div className="flex items-center gap-3">
+          <Link to="/create-blog">
+            <button className="btn btn-primary">Create Blog</button>
+          </Link>
+          <Link to="/discover">
+            <button className="btn btn-secondary">Find Friends</button>
+          </Link>
           <label className="swap swap-rotate">
             <input type="checkbox" onChange={toggleTheme} checked={theme === "abyss"} />
             <svg
