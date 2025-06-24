@@ -3,6 +3,7 @@ import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { removeUserFromFeed } from "../utils/feedSlice";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const UserCard = ({ user, hasSentRequest = false }) => {
   const { _id, firstName, lastName, photoUrl, age, gender, about, skills = [] } = user;
@@ -58,7 +59,7 @@ const UserCard = ({ user, hasSentRequest = false }) => {
       <div className="w-full lg:w-3/5 p-6 lg:p-10 flex flex-col justify-between">
         <div>
           <h2 className="text-3xl font-bold text-gray-900 dark:text-base-content mb-2 tracking-wide">
-            {firstName} {lastName}
+            <Link to={`/users/${_id}`}>{firstName} {lastName}</Link>
           </h2>
           {age && gender && (
             <p className="text-sm text-gray-500 dark:text-gray-400 opacity-70">{age} • {gender}</p>

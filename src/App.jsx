@@ -15,6 +15,7 @@ import TrendingBlogs from "./components/TrendingBlogs";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DiscoverUsers from "./components/DiscoverUsers";
+import UserProfile from "./components/UserProfile";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
               <Route path="/edit-blog/:id" element={<EditBlog />} />
               <Route path="/trending" element={<TrendingBlogs />} />
               <Route path="/discover" element={<DiscoverUsers />} />
+              <Route path="/users/:id" element={<UserProfile />} />
             </Route>
           </Routes>
         </BrowserRouter>

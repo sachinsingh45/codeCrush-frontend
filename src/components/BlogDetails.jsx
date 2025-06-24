@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { FaShareAlt, FaWhatsapp, FaTwitter, FaFacebook, FaLink } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaPaperPlane, FaWhatsapp, FaTwitter, FaFacebook, FaLink } from "react-icons/fa";
 import { createSocketConnection } from "../utils/socket";
 import { addConnections } from "../utils/conectionSlice";
 
@@ -50,11 +50,12 @@ const BlogDetails = () => {
   // Blog Interactions
   const handleLike = async () => {
     setActionLoading(true);
+    const wasLiked = blog.likes?.some(like => like.user._id === user?._id);
     try {
       await axios.post(`${BASE_URL}/blogs/${id}/like`, {}, {
         withCredentials: true
       });
-      toast.success("Blog liked!");
+      toast.success(wasLiked ? "Blog unliked!" : "Blog liked!");
       fetchBlog();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to like blog");
@@ -114,11 +115,13 @@ const BlogDetails = () => {
 
   const handleLikeComment = async (commentId) => {
     setActionLoading(true);
+    const comment = blog.comments.find(c => c._id === commentId);
+    const likedComment = comment?.likes?.some(like => like.user._id === user?._id);
     try {
       await axios.post(`${BASE_URL}/blogs/${id}/comments/${commentId}/like`, {}, {
         withCredentials: true
       });
-      toast.success("Comment liked!");
+      toast.success(likedComment ? "Comment unliked!" : "Comment liked!");
       fetchBlog();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to like comment");
@@ -216,14 +219,14 @@ const BlogDetails = () => {
             <p className="mb-6">Are you sure you want to delete {deleteTarget === "blog" ? "this blog" : "this comment"}?</p>
             <div className="flex gap-4 justify-end">
               <button
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
                 onClick={() => { setShowDeleteModal(false); setDeleteTarget(null); }}
                 disabled={actionLoading}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 cursor-pointer"
                 onClick={handleDelete}
                 disabled={actionLoading}
               >
@@ -236,40 +239,51 @@ const BlogDetails = () => {
       {blog.featuredImage && (
         <img src={blog.featuredImage} alt={blog.title} className="w-full h-64 object-cover rounded-xl mb-6" />
       )}
-      <h1 className="text-3xl font-bold mb-2">{blog.title}</h1>
+      <h1 className="text-3xl font-bold mb-2 text-base-content">{blog.title}</h1>
       <div className="flex items-center gap-2 mb-4">
         <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-10 h-10 rounded-full" />
-        <span className="text-base font-medium">{blog.author.firstName} {blog.author.lastName}</span>
-        <span className="text-xs text-gray-400 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
+        <span className="text-base font-medium text-base-content">{blog.author.firstName} {blog.author.lastName}</span>
+        <span className="text-xs text-neutral ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
         {blog.tags.map((tag) => (
-          <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">#{tag}</span>
+          <span key={tag} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded text-xs font-semibold tracking-wide">#{tag}</span>
         ))}
       </div>
-      <div className="prose max-w-none mb-6">
-        <p>{blog.content}</p>
+      <div className="prose max-w-none mb-6 text-base-content dark:text-base-content">
+        <pre className="whitespace-pre-wrap break-words font-sans bg-transparent p-0 m-0 border-0 shadow-none">{blog.content}</pre>
       </div>
-      <div className="flex items-center gap-4 mb-6 text-gray-600">
+      <div className="flex items-center gap-6 mb-6 text-neutral-content">
+        {/* Like Button */}
         <button
-          className={`px-3 py-1 rounded flex items-center gap-2 ${likedByUser ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-700"}`}
+          className={`flex items-center gap-2 text-2xl transition-transform duration-150 cursor-pointer ${likedByUser ? "text-red-500 scale-110" : "text-base-content hover:text-red-400"}`}
           onClick={handleLike}
           disabled={actionLoading || !user}
+          aria-label={likedByUser ? "Unlike" : "Like"}
         >
-          {actionLoading ? <span className="loader inline-block w-4 h-4 border-2 border-blue-200 border-t-transparent rounded-full animate-spin"></span> : null}
-          {likedByUser ? "Unlike" : "Like"} ({blog.likeCount || 0})
+          {actionLoading ? (
+            <span className="loader inline-block w-5 h-5 border-2 border-red-200 border-t-transparent rounded-full animate-spin"></span>
+          ) : likedByUser ? (
+            <FaHeart />
+          ) : (
+            <FaRegHeart />
+          )}
+          <span className="text-base text-base-content font-semibold">{blog.likeCount || 0}</span>
         </button>
+        {/* Share Button */}
         <div className="relative" ref={shareRef}>
           <button
-            className="px-3 py-1 rounded bg-green-500 text-white flex items-center gap-2"
+            className={`flex items-center gap-2 text-2xl text-base-content hover:text-primary transition-colors px-2 py-1 rounded-full bg-base-200 hover:bg-primary/10 cursor-pointer`}
             onClick={() => setShowShare((v) => !v)}
             disabled={actionLoading || !user}
             type="button"
+            aria-label="Share"
           >
-            <FaShareAlt /> Share ({blog.shareCount || 0})
+            <FaPaperPlane />
+            <span className="text-base font-semibold">{blog.shareCount || 0}</span>
           </button>
           {showShare && (
-            <div className="absolute z-50 top-12 right-0 card bg-base-100 dark:bg-base-200 shadow-lg border border-base-200 dark:border-base-300 w-64 animate-fade-in">
+            <div className="absolute z-50 bottom-12 right-0 card bg-base-100 dark:bg-base-200 shadow-lg border border-base-200 dark:border-base-300 w-64 animate-fade-in">
               <div className="flex flex-col gap-2 p-4">
                 <button
                   className="btn btn-ghost flex items-center gap-2 justify-start text-base-content"
@@ -316,7 +330,7 @@ const BlogDetails = () => {
         </div>
         {isAuthor && (
           <button
-            className="px-3 py-1 rounded bg-red-500 text-white flex items-center gap-2"
+            className="px-3 py-1 rounded bg-red-500 text-white flex items-center gap-2 ml-2 cursor-pointer"
             onClick={() => confirmDelete("blog")}
             disabled={actionLoading}
           >
@@ -324,7 +338,7 @@ const BlogDetails = () => {
             Delete
           </button>
         )}
-        <span className="ml-auto">💬 {blog.commentCount || 0} | {blog.readTime} min read</span>
+        <span className="ml-auto text-base-content flex items-center gap-2"><span className="text-xl">💬</span> {blog.commentCount || 0} | <span className="text-xl">⏱</span> {blog.readTime} min read</span>
       </div>
       {/* Add Comment */}
       {user && (
@@ -339,7 +353,7 @@ const BlogDetails = () => {
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2"
+            className="px-4 py-2 bg-blue-500 text-white rounded-md flex items-center gap-2 cursor-pointer"
             disabled={actionLoading || !comment.trim()}
           >
             {actionLoading ? <span className="loader inline-block w-4 h-4 border-2 border-blue-200 border-t-transparent rounded-full animate-spin"></span> : null}
@@ -349,32 +363,38 @@ const BlogDetails = () => {
       )}
       {/* Comments Section */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Comments</h2>
+        <h2 className="text-xl font-semibold mb-4 text-base-content">Comments</h2>
         {blog.comments && blog.comments.length > 0 ? (
           <div className="space-y-4">
             {blog.comments.map((comment) => {
               const likedComment = comment.likes?.some(like => like.user._id === user?._id);
               const canDelete = user && (user._id === comment.user._id || isAuthor);
               return (
-                <div key={comment._id} className="bg-gray-50 p-4 rounded-lg">
+                <div key={comment._id} className="bg-base-100 dark:bg-base-200 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-1">
                     <img src={comment.user.photoUrl} alt={comment.user.firstName} className="w-7 h-7 rounded-full" />
-                    <span className="font-medium text-sm">{comment.user.firstName} {comment.user.lastName}</span>
-                    <span className="text-xs text-gray-400 ml-auto">{new Date(comment.createdAt).toLocaleDateString()}</span>
+                    <span className="font-medium text-sm text-base-content">{comment.user.firstName} {comment.user.lastName}</span>
+                    <span className="text-xs text-neutral ml-auto">{new Date(comment.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <p className="text-gray-800 text-sm mb-2">{comment.content}</p>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <p className="text-base-content text-sm mb-2">{comment.content}</p>
+                  <div className="flex items-center gap-3 text-xs text-neutral-content">
                     <button
-                      className={`px-2 py-1 rounded flex items-center gap-2 ${likedComment ? "bg-blue-400 text-white" : "bg-gray-200 text-gray-700"}`}
+                      className={`px-2 py-1 rounded flex items-center gap-2 cursor-pointer ${likedComment ? "bg-primary/10 text-red-500" : "bg-base-200 text-base-content hover:text-red-400"}`}
                       onClick={() => handleLikeComment(comment._id)}
                       disabled={actionLoading || !user}
                     >
-                      {actionLoading ? <span className="loader inline-block w-4 h-4 border-2 border-blue-200 border-t-transparent rounded-full animate-spin"></span> : null}
-                      {likedComment ? "Unlike" : "Like"} ({comment.likes?.length || 0})
+                      {actionLoading ? (
+                        <span className="loader inline-block w-4 h-4 border-2 border-red-200 border-t-transparent rounded-full animate-spin"></span>
+                      ) : likedComment ? (
+                        <FaHeart className="text-lg" />
+                      ) : (
+                        <FaRegHeart className="text-lg" />
+                      )}
+                      <span className="ml-1 text-base font-semibold">{comment.likes?.length || 0}</span>
                     </button>
                     {canDelete && (
                       <button
-                        className="px-2 py-1 rounded bg-red-400 text-white flex items-center gap-2"
+                        className="px-2 py-1 rounded bg-error text-error-content flex items-center gap-2 cursor-pointer"
                         onClick={() => confirmDelete(comment._id)}
                         disabled={actionLoading}
                       >
@@ -388,7 +408,7 @@ const BlogDetails = () => {
             })}
           </div>
         ) : (
-          <div className="text-gray-500">No comments yet.</div>
+          <div className="text-neutral">No comments yet.</div>
         )}
       </div>
       {/* Share to Chat Modal */}
@@ -396,7 +416,7 @@ const BlogDetails = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="card bg-base-100 dark:bg-base-200 p-6 rounded-xl shadow-lg w-full max-w-md relative">
             <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 cursor-pointer"
               onClick={() => setShowChatModal(false)}
             >✕</button>
             <h2 className="text-xl font-bold mb-4">Share to Chat</h2>
@@ -409,7 +429,7 @@ const BlogDetails = () => {
                 connections.map(conn => (
                   <button
                     key={conn._id}
-                    className="btn btn-outline flex items-center gap-3 justify-start text-base-content"
+                    className="btn btn-outline flex items-center gap-3 justify-start text-base-content cursor-pointer"
                     onClick={() => handleShareToChat(conn._id)}
                   >
                     <img src={conn.photoUrl || "/default-avatar.png"} alt={conn.firstName} className="w-8 h-8 rounded-full" />

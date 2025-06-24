@@ -1,6 +1,6 @@
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -23,63 +23,52 @@ const Feed = () => {
   const dispatch = useDispatch();
   const [fetchingConnections, setFetchingConnections] = useState(false);
 
-  // Helper to ensure connections are loaded before filtering friend blogs
-  const ensureConnections = async () => {
-    if (connections && connections.length > 0) return connections;
-    setFetchingConnections(true);
-    try {
-      const res = await axios.get(`${BASE_URL}/user/connections`, { withCredentials: true });
-      if (res.data && res.data.data) {
-        dispatch(addConnections(res.data.data));
-        setFetchingConnections(false);
-        return res.data.data;
-      }
-    } catch (err) {
-      setFetchingConnections(false);
-      return [];
-    }
-    setFetchingConnections(false);
-    return [];
-  };
-
-  const fetchBlogs = async (pageNum = 1, filterType = filter, sortOrder = sort) => {
-    setLoading(true);
-    setError("");
-    try {
-      let url = `${BASE_URL}/blogs`;
-      let params = { page: pageNum, limit: 6, sort: sortOrder };
-      if (filterType === "my") {
-        url = `${BASE_URL}/users/${user?._id}/blogs`;
-      } else if (filterType === "friends") {
-        // Ensure connections are loaded
-        const loadedConnections = await ensureConnections();
-        const res = await axios.get(`${BASE_URL}/blogs`, { params });
-        const friendIds = loadedConnections.map((c) => c._id);
-        let friendBlogs = res.data.data.filter((b) => friendIds.includes(b.author._id));
-        friendBlogs = friendBlogs.sort((a, b) => sortOrder === "desc" ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt));
-        setBlogs(friendBlogs);
-        setTotalPages(1);
-        setLoading(false);
-        return;
-      }
-      const res = await axios.get(url, { params });
-      let sortedBlogs = res.data.data;
-      if (sortOrder === "asc") {
-        sortedBlogs = [...sortedBlogs].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      }
-      setBlogs(sortedBlogs);
-      setTotalPages(res.data.pagination?.totalPages || 1);
-    } catch (err) {
-      setError(err?.response?.data?.message || "Failed to load blogs");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Fetch connections only when needed
   useEffect(() => {
-    fetchBlogs(page, filter, sort);
+    if (filter === "friends" && connections.length === 0 && !fetchingConnections) {
+      setFetchingConnections(true);
+      axios.get(`${BASE_URL}/user/connections`, { withCredentials: true })
+        .then(res => {
+          if (res.data && res.data.data) {
+            dispatch(addConnections(res.data.data));
+          }
+        })
+        .finally(() => setFetchingConnections(false));
+    }
     // eslint-disable-next-line
-  }, [page, filter, user, connections, sort]);
+  }, [filter, dispatch]);
+
+  // Fetch blogs when page/filter/sort/user/connections.length changes
+  useEffect(() => {
+    const fetch = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        let url = `${BASE_URL}/blogs`;
+        let params = { page, limit: 6, sort };
+        if (filter === "my") {
+          url = `${BASE_URL}/users/${user?._id}/blogs`;
+        }
+        let res = await axios.get(url, { params });
+        let data = res.data.data;
+        if (filter === "friends" && connections.length > 0) {
+          const friendIds = connections.map(c => c._id);
+          data = data.filter(b => friendIds.includes(b.author._id));
+        }
+        if (sort === "asc") {
+          data = [...data].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        }
+        setBlogs(data);
+        setTotalPages(res.data.pagination?.totalPages || 1);
+      } catch (err) {
+        setError(err?.response?.data?.message || "Failed to load blogs");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetch();
+    // eslint-disable-next-line
+  }, [page, filter, sort, user, connections.length]);
 
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
@@ -164,7 +153,11 @@ const Feed = () => {
           </p>
           <div className="flex gap-4">
             <button
-              onClick={() => fetchBlogs(page, filter, sort)}
+              onClick={() => {
+                setFilter("all");
+                setPage(1);
+                setSort("desc");
+              }}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-lg font-medium rounded-full shadow-md hover:scale-105 transition duration-300"
             >
               Refresh Feed
@@ -197,14 +190,14 @@ const Feed = () => {
                       <span key={tag} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded text-xs font-semibold tracking-wide">#{tag}</span>
                     ))}
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold mb-2 line-clamp-2 text-gray-900 dark:text-white">{blog.title}</h2>
-                  <p className="text-gray-800 dark:text-gray-200 text-sm sm:text-base mb-4 line-clamp-3">{blog.content.slice(0, 120)}...</p>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 line-clamp-2 text-base-content">{blog.title}</h2>
+                  <p className="text-base-content text-sm sm:text-base mb-4 line-clamp-3">{blog.content.slice(0, 120)}...</p>
                   <div className="flex items-center gap-3 mb-3">
                     <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-blue-400 dark:border-blue-700" />
-                    <span className="text-base font-medium text-gray-800 dark:text-white">{blog.author.firstName} {blog.author.lastName}</span>
-                    <span className="text-xs text-gray-500 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
+                    <span className="text-base font-medium text-base-content">{blog.author.firstName} {blog.author.lastName}</span>
+                    <span className="text-xs text-neutral ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <div className="flex items-center gap-4 mt-auto text-sm text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <div className="flex items-center gap-4 mt-auto text-sm text-neutral-content border-t border-base-200 dark:border-base-300 pt-3">
                     <span title="Likes" className="flex items-center gap-1"><span role="img" aria-label="like">👍</span> {blog.likeCount || 0}</span>
                     <span title="Comments" className="flex items-center gap-1"><span role="img" aria-label="comments">💬</span> {blog.commentCount || 0}</span>
                     <span title="Shares" className="flex items-center gap-1"><span role="img" aria-label="shares">🔗</span> {blog.shareCount || 0}</span>

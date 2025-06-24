@@ -69,18 +69,20 @@ const Requests = () => {
                 key={_id}
                 className="flex flex-col sm:flex-row items-center bg-base-300 p-4 sm:p-5 rounded-lg shadow-lg mb-4 sm:mb-5 transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] text-center sm:text-left"
               >
-                {/* Profile Image */}
-                <img
-                  alt="Profile"
-                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-primary"
-                  src={photoUrl || "https://via.placeholder.com/80"}
-                />
+                {/* Profile Image and Name as Link */}
+                <Link to={`/users/${fromUserId._id}`} className="flex flex-col items-center sm:items-start">
+                  <img
+                    alt="Profile"
+                    className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full object-cover border-2 border-primary mb-2 sm:mb-0"
+                    src={photoUrl || "https://via.placeholder.com/80"}
+                  />
+                  <h2 className="font-semibold text-lg sm:text-xl text-base-content mt-2 sm:mt-0">
+                    {firstName} {lastName}
+                  </h2>
+                </Link>
 
                 {/* User Details */}
                 <div className="flex-1 mx-4 mt-3 sm:mt-0">
-                  <h2 className="font-semibold text-lg sm:text-xl text-base-content">
-                    {firstName} {lastName}
-                  </h2>
                   {age && gender && (
                     <p className="text-sm sm:text-base text-base-content">{age}, {gender}</p>
                   )}

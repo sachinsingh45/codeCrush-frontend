@@ -62,14 +62,14 @@ const TrendingBlogs = () => {
                     <span key={tag} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded text-xs font-semibold tracking-wide">#{tag}</span>
                   ))}
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold mb-2 line-clamp-2 text-gray-900 dark:text-white">{blog.title}</h2>
-                <p className="text-gray-800 dark:text-gray-200 text-sm sm:text-base mb-4 line-clamp-3">{blog.content.slice(0, 120)}...</p>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 line-clamp-2 text-base-content">{blog.title}</h2>
+                <p className="text-base-content text-sm sm:text-base mb-4 line-clamp-3">{blog.content.slice(0, 120)}...</p>
                 <div className="flex items-center gap-3 mb-3">
                   <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-blue-400 dark:border-blue-700" />
-                  <span className="text-base font-medium text-gray-800 dark:text-white">{blog.author.firstName} {blog.author.lastName}</span>
-                  <span className="text-xs text-gray-500 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
+                  <span className="text-base font-medium text-base-content">{blog.author.firstName} {blog.author.lastName}</span>
+                  <span className="text-xs text-neutral ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
                 </div>
-                <div className="flex items-center gap-4 mt-auto text-sm text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 pt-3">
+                <div className="flex items-center gap-4 mt-auto text-sm text-neutral-content border-t border-base-200 dark:border-base-300 pt-3">
                   <span title="Engagement" className="flex items-center gap-1"><span role="img" aria-label="fire">🔥</span> {blog.engagementScore || 0}</span>
                   <span title="Likes" className="flex items-center gap-1"><span role="img" aria-label="like">👍</span> {blog.likeCount || 0}</span>
                   <span title="Comments" className="flex items-center gap-1"><span role="img" aria-label="comments">💬</span> {blog.commentCount || 0}</span>
