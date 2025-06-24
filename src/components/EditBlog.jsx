@@ -59,9 +59,9 @@ const EditBlog = () => {
 
       const res = await axios.put(`${BASE_URL}/blogs/${id}`, blogData, {
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
+          "Content-Type": "application/json"
+        },
+        withCredentials: true
       });
 
       if (res.data.success) {

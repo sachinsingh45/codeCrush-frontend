@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { toast } from "react-toastify";
+import Spinner from "./Spinner";
 
 const TrendingBlogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -30,33 +31,10 @@ const TrendingBlogs = () => {
   }, []);
 
   if (loading) return (
-    <div className="max-w-5xl mx-auto py-10 px-4">
+    <div className="max-w-5xl mx-auto py-10 px-4 flex flex-col items-center justify-center min-h-[300px]">
       <h1 className="text-3xl font-bold mb-8">Trending Blogs</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-xl shadow-md overflow-hidden">
-            <Skeleton height={160} />
-            <div className="p-5">
-              <Skeleton height={24} width={"80%"} className="mb-2" />
-              <div className="flex items-center gap-2 mb-2">
-                <Skeleton circle width={32} height={32} />
-                <Skeleton width={80} />
-                <Skeleton width={60} className="ml-auto" />
-              </div>
-              <Skeleton count={2} height={14} className="mb-3" />
-              <div className="flex gap-2 mb-3">
-                <Skeleton width={40} height={20} />
-                <Skeleton width={40} height={20} />
-              </div>
-              <div className="flex gap-4 mt-auto">
-                <Skeleton width={40} />
-                <Skeleton width={40} />
-                <Skeleton width={40} />
-                <Skeleton width={60} className="ml-auto" />
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="flex justify-center items-center w-full mt-10">
+        <Spinner size={64} />
       </div>
     </div>
   );
@@ -72,31 +50,31 @@ const TrendingBlogs = () => {
           {blogs.map((blog) => (
             <div
               key={blog._id}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              className="group bg-white dark:bg-base-200 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden hover:scale-[1.03] hover:shadow-2xl transition-all cursor-pointer flex flex-col"
               onClick={() => navigate(`/blogs/${blog._id}`)}
             >
               {blog.featuredImage && (
-                <img src={blog.featuredImage} alt={blog.title} className="w-full h-40 object-cover" />
+                <img src={blog.featuredImage} alt={blog.title} className="w-full h-44 object-cover transition-transform group-hover:scale-105 duration-300" />
               )}
-              <div className="p-5 flex flex-col h-full">
-                <h2 className="text-xl font-semibold mb-2 line-clamp-2">{blog.title}</h2>
-                <div className="flex items-center gap-2 mb-2">
-                  <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-8 h-8 rounded-full" />
-                  <span className="text-sm text-gray-700">{blog.author.firstName} {blog.author.lastName}</span>
-                  <span className="text-xs text-gray-400 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
-                </div>
-                <p className="text-gray-700 text-sm mb-3 line-clamp-3">{blog.content.slice(0, 120)}...</p>
-                <div className="flex flex-wrap gap-2 mb-3">
+              <div className="p-4 sm:p-5 flex flex-col h-full">
+                <div className="flex flex-wrap gap-2 mb-2">
                   {blog.tags.map((tag) => (
-                    <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">#{tag}</span>
+                    <span key={tag} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded text-xs font-semibold tracking-wide">#{tag}</span>
                   ))}
                 </div>
-                <div className="flex items-center gap-4 mt-auto text-sm text-gray-500">
-                  <span>🔥 {blog.engagementScore || 0}</span>
-                  <span>👍 {blog.likeCount || 0}</span>
-                  <span>💬 {blog.commentCount || 0}</span>
-                  <span>🔗 {blog.shareCount || 0}</span>
-                  <span className="ml-auto">{blog.readTime} min read</span>
+                <h2 className="text-xl sm:text-2xl font-bold mb-2 line-clamp-2 text-gray-900 dark:text-white">{blog.title}</h2>
+                <p className="text-gray-800 dark:text-gray-200 text-sm sm:text-base mb-4 line-clamp-3">{blog.content.slice(0, 120)}...</p>
+                <div className="flex items-center gap-3 mb-3">
+                  <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-blue-400 dark:border-blue-700" />
+                  <span className="text-base font-medium text-gray-800 dark:text-white">{blog.author.firstName} {blog.author.lastName}</span>
+                  <span className="text-xs text-gray-500 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center gap-4 mt-auto text-sm text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 pt-3">
+                  <span title="Engagement" className="flex items-center gap-1"><span role="img" aria-label="fire">🔥</span> {blog.engagementScore || 0}</span>
+                  <span title="Likes" className="flex items-center gap-1"><span role="img" aria-label="like">👍</span> {blog.likeCount || 0}</span>
+                  <span title="Comments" className="flex items-center gap-1"><span role="img" aria-label="comments">💬</span> {blog.commentCount || 0}</span>
+                  <span title="Shares" className="flex items-center gap-1"><span role="img" aria-label="shares">🔗</span> {blog.shareCount || 0}</span>
+                  <span className="ml-auto" title="Read time">⏱ {blog.readTime} min</span>
                 </div>
               </div>
             </div>

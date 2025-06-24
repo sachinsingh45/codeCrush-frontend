@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { FaShareAlt, FaWhatsapp, FaTwitter, FaFacebook, FaLink } from "react-icons/fa";
+import { createSocketConnection } from "../utils/socket";
+import { addConnections } from "../utils/conectionSlice";
 
 const BlogDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const user = useSelector((store) => store.user);
+  const dispatch = useDispatch();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -18,6 +22,12 @@ const BlogDetails = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null); // 'blog' or commentId
+  const [showShare, setShowShare] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const connections = useSelector((store) => store.connections) || [];
+  const blogUrl = window.location.href;
+  const shareRef = useRef(null);
+  const [fetchingConnections, setFetchingConnections] = useState(false);
 
   const fetchBlog = async () => {
     setLoading(true);
@@ -42,27 +52,12 @@ const BlogDetails = () => {
     setActionLoading(true);
     try {
       await axios.post(`${BASE_URL}/blogs/${id}/like`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        withCredentials: true
       });
       toast.success("Blog liked!");
       fetchBlog();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to like blog");
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleShare = async () => {
-    setActionLoading(true);
-    try {
-      await axios.post(`${BASE_URL}/blogs/${id}/share`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-      toast.success("Blog shared!");
-      fetchBlog();
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Failed to share blog");
     } finally {
       setActionLoading(false);
     }
@@ -78,13 +73,13 @@ const BlogDetails = () => {
     try {
       if (deleteTarget === "blog") {
         await axios.delete(`${BASE_URL}/blogs/${id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          withCredentials: true
         });
         toast.success("Blog deleted!");
         navigate("/");
       } else {
         await axios.delete(`${BASE_URL}/blogs/${id}/comments/${deleteTarget}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          withCredentials: true
         });
         toast.success("Comment deleted!");
         fetchBlog();
@@ -105,7 +100,7 @@ const BlogDetails = () => {
     setActionLoading(true);
     try {
       await axios.post(`${BASE_URL}/blogs/${id}/comments`, { content: comment }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        withCredentials: true
       });
       setComment("");
       toast.success("Comment added!");
@@ -121,7 +116,7 @@ const BlogDetails = () => {
     setActionLoading(true);
     try {
       await axios.post(`${BASE_URL}/blogs/${id}/comments/${commentId}/like`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        withCredentials: true
       });
       toast.success("Comment liked!");
       fetchBlog();
@@ -130,6 +125,57 @@ const BlogDetails = () => {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(blogUrl);
+    toast.success("Link copied to clipboard!");
+    setShowShare(false);
+  };
+
+  const handleShareToChat = (targetUserId) => {
+    const userId = user?._id;
+    const socket = createSocketConnection();
+    socket.emit("sendMessage", {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      userId,
+      targetUserId,
+      text: `Check out this blog: ${blogUrl}`,
+    });
+    setShowChatModal(false);
+    setShowShare(false);
+    toast.success("Blog link sent to chat!");
+  };
+
+  // Add a click-away listener to close the share popup
+  useEffect(() => {
+    if (!showShare) return;
+    const handleClick = (e) => {
+      if (shareRef.current && !shareRef.current.contains(e.target)) {
+        setShowShare(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showShare]);
+
+  const ensureConnections = async () => {
+    if (connections && connections.length > 0) return connections;
+    setFetchingConnections(true);
+    try {
+      const res = await axios.get(`${BASE_URL}/user/connections`, { withCredentials: true });
+      if (res.data && res.data.data) {
+        dispatch(addConnections(res.data.data));
+        setFetchingConnections(false);
+        return res.data.data;
+      }
+    } catch (err) {
+      setFetchingConnections(false);
+      return [];
+    }
+    setFetchingConnections(false);
+    return [];
   };
 
   if (loading) return (
@@ -213,14 +259,61 @@ const BlogDetails = () => {
           {actionLoading ? <span className="loader inline-block w-4 h-4 border-2 border-blue-200 border-t-transparent rounded-full animate-spin"></span> : null}
           {likedByUser ? "Unlike" : "Like"} ({blog.likeCount || 0})
         </button>
-        <button
-          className="px-3 py-1 rounded bg-green-500 text-white flex items-center gap-2"
-          onClick={handleShare}
-          disabled={actionLoading || !user}
-        >
-          {actionLoading ? <span className="loader inline-block w-4 h-4 border-2 border-green-200 border-t-transparent rounded-full animate-spin"></span> : null}
-          Share ({blog.shareCount || 0})
-        </button>
+        <div className="relative" ref={shareRef}>
+          <button
+            className="px-3 py-1 rounded bg-green-500 text-white flex items-center gap-2"
+            onClick={() => setShowShare((v) => !v)}
+            disabled={actionLoading || !user}
+            type="button"
+          >
+            <FaShareAlt /> Share ({blog.shareCount || 0})
+          </button>
+          {showShare && (
+            <div className="absolute z-50 top-12 right-0 card bg-base-100 dark:bg-base-200 shadow-lg border border-base-200 dark:border-base-300 w-64 animate-fade-in">
+              <div className="flex flex-col gap-2 p-4">
+                <button
+                  className="btn btn-ghost flex items-center gap-2 justify-start text-base-content"
+                  onClick={handleCopyLink}
+                >
+                  <FaLink /> Copy Link
+                </button>
+                <a
+                  className="btn btn-ghost flex items-center gap-2 justify-start text-base-content"
+                  href={`https://wa.me/?text=${encodeURIComponent(blogUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FaWhatsapp className="text-green-500" /> WhatsApp
+                </a>
+                <a
+                  className="btn btn-ghost flex items-center gap-2 justify-start text-base-content"
+                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(blogUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FaTwitter className="text-sky-500" /> Twitter
+                </a>
+                <a
+                  className="btn btn-ghost flex items-center gap-2 justify-start text-base-content"
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(blogUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FaFacebook className="text-blue-600" /> Facebook
+                </a>
+                <button
+                  className="btn btn-ghost flex items-center gap-2 justify-start text-base-content"
+                  onClick={async () => {
+                    await ensureConnections();
+                    setShowChatModal(true);
+                  }}
+                >
+                  💬 Share to Chat
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         {isAuthor && (
           <button
             className="px-3 py-1 rounded bg-red-500 text-white flex items-center gap-2"
@@ -298,6 +391,36 @@ const BlogDetails = () => {
           <div className="text-gray-500">No comments yet.</div>
         )}
       </div>
+      {/* Share to Chat Modal */}
+      {showChatModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="card bg-base-100 dark:bg-base-200 p-6 rounded-xl shadow-lg w-full max-w-md relative">
+            <button
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+              onClick={() => setShowChatModal(false)}
+            >✕</button>
+            <h2 className="text-xl font-bold mb-4">Share to Chat</h2>
+            <div className="flex flex-col gap-2 max-h-72 overflow-y-auto">
+              {fetchingConnections ? (
+                <div className="text-base-content text-center py-6">Loading connections...</div>
+              ) : connections.length === 0 ? (
+                <div className="text-base-content">No connections found.</div>
+              ) : (
+                connections.map(conn => (
+                  <button
+                    key={conn._id}
+                    className="btn btn-outline flex items-center gap-3 justify-start text-base-content"
+                    onClick={() => handleShareToChat(conn._id)}
+                  >
+                    <img src={conn.photoUrl || "/default-avatar.png"} alt={conn.firstName} className="w-8 h-8 rounded-full" />
+                    {conn.firstName} {conn.lastName}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

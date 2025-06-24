@@ -35,9 +35,9 @@ const CreateBlog = () => {
 
       const res = await axios.post(`${BASE_URL}/blogs`, blogData, {
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
-        }
+          "Content-Type": "application/json"
+        },
+        withCredentials: true
       });
 
       if (res.data.success) {

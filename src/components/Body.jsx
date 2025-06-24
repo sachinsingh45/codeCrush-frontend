@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import NavBar from "./NavBar";
 import Footer from "./Footer";
 import axios from "axios";
@@ -11,6 +11,7 @@ const Body = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userData = useSelector((store) => store.user);
+  const location = useLocation();
 
   const fetchUser = async () => {
     if (userData) return;
@@ -35,10 +36,9 @@ const Body = () => {
     <div>
       <NavBar />
       <div className="mt-16 min-h-[66vh]">
-
-      <Outlet />
+        <Outlet />
       </div>
-      <Footer />
+      {!(location.pathname.startsWith("/chats") || location.pathname.startsWith("/chat")) && <Footer />}
     </div>
   );
 };

@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import { useSelector, useDispatch } from "react-redux";
+import { FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
+import { addConnections } from "../utils/conectionSlice";
+import Spinner from "./Spinner";
 
 const Feed = () => {
   const [blogs, setBlogs] = useState([]);
@@ -11,17 +15,60 @@ const Feed = () => {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [filter, setFilter] = useState("all");
+  const [sort, setSort] = useState("desc"); // 'desc' for newest first, 'asc' for oldest first
   const navigate = useNavigate();
+  const user = useSelector((store) => store.user);
+  const connections = useSelector((store) => store.connections) || [];
+  const dispatch = useDispatch();
+  const [fetchingConnections, setFetchingConnections] = useState(false);
 
-  const fetchBlogs = async (pageNum = 1) => {
+  // Helper to ensure connections are loaded before filtering friend blogs
+  const ensureConnections = async () => {
+    if (connections && connections.length > 0) return connections;
+    setFetchingConnections(true);
+    try {
+      const res = await axios.get(`${BASE_URL}/user/connections`, { withCredentials: true });
+      if (res.data && res.data.data) {
+        dispatch(addConnections(res.data.data));
+        setFetchingConnections(false);
+        return res.data.data;
+      }
+    } catch (err) {
+      setFetchingConnections(false);
+      return [];
+    }
+    setFetchingConnections(false);
+    return [];
+  };
+
+  const fetchBlogs = async (pageNum = 1, filterType = filter, sortOrder = sort) => {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.get(`${BASE_URL}/blogs`, {
-        params: { page: pageNum, limit: 6 },
-      });
-      setBlogs(res.data.data);
-      setTotalPages(res.data.pagination.totalPages);
+      let url = `${BASE_URL}/blogs`;
+      let params = { page: pageNum, limit: 6, sort: sortOrder };
+      if (filterType === "my") {
+        url = `${BASE_URL}/users/${user?._id}/blogs`;
+      } else if (filterType === "friends") {
+        // Ensure connections are loaded
+        const loadedConnections = await ensureConnections();
+        const res = await axios.get(`${BASE_URL}/blogs`, { params });
+        const friendIds = loadedConnections.map((c) => c._id);
+        let friendBlogs = res.data.data.filter((b) => friendIds.includes(b.author._id));
+        friendBlogs = friendBlogs.sort((a, b) => sortOrder === "desc" ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt));
+        setBlogs(friendBlogs);
+        setTotalPages(1);
+        setLoading(false);
+        return;
+      }
+      const res = await axios.get(url, { params });
+      let sortedBlogs = res.data.data;
+      if (sortOrder === "asc") {
+        sortedBlogs = [...sortedBlogs].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      }
+      setBlogs(sortedBlogs);
+      setTotalPages(res.data.pagination?.totalPages || 1);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load blogs");
     } finally {
@@ -30,116 +77,151 @@ const Feed = () => {
   };
 
   useEffect(() => {
-    fetchBlogs(page);
-  }, [page]);
+    fetchBlogs(page, filter, sort);
+    // eslint-disable-next-line
+  }, [page, filter, user, connections, sort]);
 
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
 
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto py-10 px-4">
-        <h1 className="text-3xl font-bold mb-8">Latest Blogs</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl shadow-md overflow-hidden">
-              <Skeleton height={160} />
-              <div className="p-5">
-                <Skeleton height={24} width={"80%"} className="mb-2" />
-                <div className="flex items-center gap-2 mb-2">
-                  <Skeleton circle width={32} height={32} />
-                  <Skeleton width={80} />
-                  <Skeleton width={60} className="ml-auto" />
-                </div>
-                <Skeleton count={2} height={14} className="mb-3" />
-                <div className="flex gap-2 mb-3">
-                  <Skeleton width={40} height={20} />
-                  <Skeleton width={40} height={20} />
-                </div>
-                <div className="flex gap-4 mt-auto">
-                  <Skeleton width={40} />
-                  <Skeleton width={40} />
-                  <Skeleton width={40} />
-                  <Skeleton width={60} className="ml-auto" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="flex justify-center mt-20 text-red-500">{error}</div>;
-  }
-
-  if (!blogs.length) {
-    return (
-      <div className="mt-20 flex flex-col items-center justify-center mb-10 p-6 rounded-xl">
-        <img
-          src="/empty-feed.png"
-          alt="No blogs found"
-          className="w-52 h-52 mb-4 opacity-90"
-        />
-        <h1 className="text-2xl font-semibold text-base-content flex items-center gap-2">
-          No blogs found!
-        </h1>
-        <p className="text-base-content mb-4 text-center">
-          It seems a bit quiet here... Try refreshing to see if there are new blogs!
-        </p>
+  // Sort & Filter Bar JSX
+  const sortFilterBar = (
+    <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 p-4 card bg-base-100/80 dark:bg-base-200/80 shadow-lg border border-base-200 dark:border-base-300 backdrop-blur-md">
+      {/* Sort Dropdown with Icon */}
+      <div className="flex items-center gap-2 w-full md:w-auto flex-nowrap min-w-0">
         <button
-          onClick={() => fetchBlogs(page)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-lg font-medium rounded-full shadow-md hover:scale-105 transition duration-300"
+          type="button"
+          aria-label={sort === "desc" ? "Sort: Newest First" : "Sort: Oldest First"}
+          title={sort === "desc" ? "Sort: Newest First" : "Sort: Oldest First"}
+          className="btn btn-ghost btn-xs md:btn-sm text-lg text-base-content ml-0"
+          onClick={() => setSort(sort === "desc" ? "asc" : "desc")}
         >
-          Refresh Feed
+          <FaSortAmountDown className={sort === "desc" ? "rotate-0" : "rotate-180 transition-transform duration-200"} />
         </button>
       </div>
-    );
-  }
+      {/* Filter Buttons */}
+      <div className="flex gap-2 w-full md:w-auto justify-center">
+        <button
+          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "all" ? "btn-primary text-white" : "btn-ghost text-base-content"}`}
+          onClick={() => { setFilter("all"); setPage(1); }}
+        >
+          All Blogs
+        </button>
+        <button
+          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "my" ? "btn-primary text-white" : "btn-ghost text-base-content"}`}
+          onClick={() => { setFilter("my"); setPage(1); }}
+        >
+          My Blogs
+        </button>
+        <button
+          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "friends" ? "btn-primary text-white" : "btn-ghost text-base-content"}`}
+          onClick={() => { setFilter("friends"); setPage(1); }}
+        >
+          Friend Blogs
+        </button>
+      </div>
+      {/* Create Blog Button */}
+      {user && (
+        <button
+          className="btn btn-success btn-sm md:btn-md rounded-full font-semibold shadow-md text-white ml-0 md:ml-4 w-full md:w-auto"
+          onClick={() => navigate("/create-blog")}
+        >
+          Create Blog
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="max-w-5xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-8">Latest Blogs</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {blogs.map((blog) => (
-          <div
-            key={blog._id}
-            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => navigate(`/blogs/${blog._id}`)}
-          >
-            {blog.featuredImage && (
-              <img src={blog.featuredImage} alt={blog.title} className="w-full h-40 object-cover" />
-            )}
-            <div className="p-5 flex flex-col h-full">
-              <h2 className="text-xl font-semibold mb-2 line-clamp-2">{blog.title}</h2>
-              <div className="flex items-center gap-2 mb-2">
-                <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-8 h-8 rounded-full" />
-                <span className="text-sm text-gray-700">{blog.author.firstName} {blog.author.lastName}</span>
-                <span className="text-xs text-gray-400 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
-              </div>
-              <p className="text-gray-700 text-sm mb-3 line-clamp-3">{blog.content.slice(0, 120)}...</p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {blog.tags.map((tag) => (
-                  <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">#{tag}</span>
-                ))}
-              </div>
-              <div className="flex items-center gap-4 mt-auto text-sm text-gray-500">
-                <span>👍 {blog.likeCount || 0}</span>
-                <span>💬 {blog.commentCount || 0}</span>
-                <span>🔗 {blog.shareCount || 0}</span>
-                <span className="ml-auto">{blog.readTime} min read</span>
-              </div>
-            </div>
+      {sortFilterBar}
+      {/* Blog List Area */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center min-h-[300px] w-full">
+          <div className="flex justify-center items-center w-full mt-10">
+            <Spinner size={64} />
           </div>
-        ))}
-      </div>
-      {/* Pagination Controls */}
-      <div className="flex justify-center items-center gap-4 mt-10">
-        <button onClick={handlePrev} disabled={page === 1} className="px-4 py-2 rounded bg-gray-200 disabled:opacity-50">Prev</button>
-        <span>Page {page} of {totalPages}</span>
-        <button onClick={handleNext} disabled={page === totalPages} className="px-4 py-2 rounded bg-gray-200 disabled:opacity-50">Next</button>
-      </div>
+        </div>
+      ) : error ? (
+        <div className="flex justify-center mt-20 text-red-500 w-full">{error}</div>
+      ) : fetchingConnections ? (
+        <div className="flex justify-center items-center min-h-[200px] w-full">
+          <Skeleton height={40} width={200} />
+          <span className="ml-4 text-base-content text-lg font-semibold">Loading your connections...</span>
+        </div>
+      ) : !blogs.length ? (
+        <div className="mt-20 flex flex-col items-center justify-center mb-10 p-6 rounded-xl w-full">
+          <img
+            src="/empty-feed.png"
+            alt="No blogs found"
+            className="w-52 h-52 mb-4 opacity-90"
+          />
+          <h1 className="text-2xl font-semibold text-base-content flex items-center gap-2">
+            No blogs found!
+          </h1>
+          <p className="text-base-content mb-4 text-center">
+            It seems a bit quiet here... Try refreshing to see if there are new blogs!
+          </p>
+          <div className="flex gap-4">
+            <button
+              onClick={() => fetchBlogs(page, filter, sort)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-lg font-medium rounded-full shadow-md hover:scale-105 transition duration-300"
+            >
+              Refresh Feed
+            </button>
+            {filter === "my" && (
+              <button
+                onClick={() => navigate("/create-blog")}
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-700 text-white text-lg font-medium rounded-full shadow-md hover:scale-105 transition duration-300"
+              >
+                Create Blog
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {blogs.map((blog) => (
+              <div
+                key={blog._id}
+                className="group bg-white dark:bg-base-200 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden hover:scale-[1.03] hover:shadow-2xl transition-all cursor-pointer flex flex-col"
+                onClick={() => navigate(`/blogs/${blog._id}`)}
+              >
+                {blog.featuredImage && (
+                  <img src={blog.featuredImage} alt={blog.title} className="w-full h-44 object-cover transition-transform group-hover:scale-105 duration-300" />
+                )}
+                <div className="p-4 sm:p-5 flex flex-col h-full">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {blog.tags.map((tag) => (
+                      <span key={tag} className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded text-xs font-semibold tracking-wide">#{tag}</span>
+                    ))}
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 line-clamp-2 text-gray-900 dark:text-white">{blog.title}</h2>
+                  <p className="text-gray-800 dark:text-gray-200 text-sm sm:text-base mb-4 line-clamp-3">{blog.content.slice(0, 120)}...</p>
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-blue-400 dark:border-blue-700" />
+                    <span className="text-base font-medium text-gray-800 dark:text-white">{blog.author.firstName} {blog.author.lastName}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-4 mt-auto text-sm text-gray-600 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 pt-3">
+                    <span title="Likes" className="flex items-center gap-1"><span role="img" aria-label="like">👍</span> {blog.likeCount || 0}</span>
+                    <span title="Comments" className="flex items-center gap-1"><span role="img" aria-label="comments">💬</span> {blog.commentCount || 0}</span>
+                    <span title="Shares" className="flex items-center gap-1"><span role="img" aria-label="shares">🔗</span> {blog.shareCount || 0}</span>
+                    <span className="ml-auto" title="Read time">⏱ {blog.readTime} min</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-center items-center gap-4 mt-10">
+            <button onClick={handlePrev} disabled={page === 1} className="px-4 py-2 rounded bg-gray-200 disabled:opacity-50">Prev</button>
+            <span>Page {page} of {totalPages}</span>
+            <button onClick={handleNext} disabled={page === totalPages} className="px-4 py-2 rounded bg-gray-200 disabled:opacity-50">Next</button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
