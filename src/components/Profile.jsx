@@ -5,7 +5,7 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useNavigate } from "react-router-dom";
 import Spinner from "./Spinner";
-import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt, FaEdit, FaFolderOpen } from "react-icons/fa";
+import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt, FaEdit, FaFolderOpen, FaLinkedin, FaGithub } from "react-icons/fa";
 import UserCard from "./UserCard";
 
 const statIcons = [
@@ -54,6 +54,9 @@ const Profile = () => {
   if (loading) return <div className="flex justify-center items-center min-h-[300px]"><Spinner size={48} /></div>;
   if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
 
+  // Defensive: always default blogs to an array
+  const safeBlogs = Array.isArray(blogs) ? blogs : [];
+
   return (
     <div className="max-w-4xl mx-auto py-6 px-2 sm:px-4 relative">
       {showEdit ? (
@@ -80,11 +83,11 @@ const Profile = () => {
               />
             </div>
             <div className="flex flex-col items-center w-full mt-16 relative">
-              <div className="bg-white dark:bg-base-200 rounded-xl shadow-lg px-6 py-5 mt-4 w-full max-w-xl flex flex-col items-center animate-fade-in border border-blue-50">
-                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-center">
+              <div className="bg-base-100 dark:bg-base-200 rounded-xl shadow-lg px-6 py-5 mt-4 w-full max-w-xl flex flex-col items-center animate-fade-in border border-blue-50">
+                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-center text-base-content">
                   <FaUser className="text-blue-500" /> {user.firstName} {user.lastName}
                 </h1>
-                <div className="flex flex-wrap gap-4 justify-center text-gray-500 text-sm mb-2">
+                <div className="flex flex-wrap gap-4 justify-center text-base-content text-sm mb-2">
                   {user.age && (
                     <span className="flex items-center gap-1"><FaBirthdayCake /> {user.age} yrs</span>
                   )}
@@ -93,6 +96,34 @@ const Profile = () => {
                   )}
                 </div>
                 <p className="text-base-content text-center mb-3 max-w-xs xs:max-w-sm sm:max-w-lg text-base">{user.about || <span className="italic text-gray-400">No details available.</span>}</p>
+                {(user.linkedin || user.github) && (
+                  <div className="flex gap-4 mt-2">
+                    {user.linkedin && (
+                      <a
+                        href={user.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-blue-700 hover:underline"
+                        title="View LinkedIn Profile"
+                      >
+                        <FaLinkedin className="text-blue-600 text-xl" />
+                        <span className="break-all">LinkedIn</span>
+                      </a>
+                    )}
+                    {user.github && (
+                      <a
+                        href={user.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-gray-800 hover:underline"
+                        title="View GitHub Profile"
+                      >
+                        <FaGithub className="text-gray-800 text-xl" />
+                        <span className="break-all">GitHub</span>
+                      </a>
+                    )}
+                  </div>
+                )}
                 {user.skills && user.skills.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2 justify-center">
                     {user.skills.map((skill, idx) => (
@@ -188,11 +219,11 @@ const Profile = () => {
                   aria-label="Close Drafts"
                 >✕</button>
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><FaFolderOpen /> Your Drafts</h2>
-                {blogs.filter(b => b.status === 'draft').length === 0 ? (
+                {safeBlogs.filter(b => b.status === 'draft').length === 0 ? (
                   <div className="text-gray-500 text-center">No drafts available.</div>
                 ) : (
                   <ul className="space-y-3">
-                    {blogs.filter(b => b.status === 'draft').map(draft => (
+                    {safeBlogs.filter(b => b.status === 'draft').map(draft => (
                       <li key={draft._id} className="flex items-center gap-3 p-3 bg-base-100 rounded-lg shadow hover:bg-blue-50 transition cursor-pointer"
                         onClick={async () => {
                           try {
@@ -223,14 +254,14 @@ const Profile = () => {
               <h2 className="text-xl xs:text-2xl font-bold"><FaRegFileAlt className="inline text-blue-500 mr-2" /> Your Blogs</h2>
               <div className="flex-grow border-t border-gray-200 ml-2"></div>
             </div>
-            {blogs.length === 0 ? (
+            {safeBlogs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 xs:py-10">
                 <img src="/empty-feed.png" alt="No blogs" className="w-24 h-24 xs:w-32 xs:h-32 opacity-70 mb-4" />
                 <div className="text-gray-500 text-base xs:text-lg font-medium text-center">You haven't written any blogs yet.</div>
               </div>
             ) : (
               <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 xs:gap-6">
-                {blogs
+                {safeBlogs
                   .filter(blog => blogFilter === 'all' ? true : blog.status === blogFilter)
                   .map((blog) => (
                     <div

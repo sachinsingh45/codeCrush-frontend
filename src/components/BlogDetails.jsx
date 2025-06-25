@@ -6,7 +6,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import { FaHeart, FaRegHeart, FaPaperPlane, FaWhatsapp, FaTwitter, FaFacebook, FaLink } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaPaperPlane, FaWhatsapp, FaTwitter, FaFacebook, FaLink, FaCommentDots, FaShareAlt } from "react-icons/fa";
 import { createSocketConnection } from "../utils/socket";
 import { addConnections } from "../utils/conectionSlice";
 
@@ -28,6 +28,7 @@ const BlogDetails = () => {
   const blogUrl = window.location.href;
   const shareRef = useRef(null);
   const [fetchingConnections, setFetchingConnections] = useState(false);
+  const likeSectionRef = useRef(null);
 
   const fetchBlog = async () => {
     setLoading(true);
@@ -211,6 +212,23 @@ const BlogDetails = () => {
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
+      {/* Quick Action Banner */}
+      <div
+        className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-blue-50 dark:bg-base-200 border border-blue-100 dark:border-base-300 shadow-sm cursor-pointer hover:bg-blue-100/80 dark:hover:bg-base-300 transition-all"
+        onClick={() => {
+          likeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }}
+        title="Jump to like, comment, or share"
+        role="button"
+        tabIndex={0}
+        onKeyPress={e => { if (e.key === 'Enter' || e.key === ' ') { likeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }}
+      >
+        <span className="flex items-center gap-2 text-blue-500 text-xl">
+          <FaHeart /> <FaCommentDots /> <FaShareAlt />
+        </span>
+        <span className="text-base font-medium text-base-content">Quick actions: Like, comment, or share this blog</span>
+        <span className="ml-auto text-sm text-primary">Click here</span>
+      </div>
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
@@ -242,7 +260,13 @@ const BlogDetails = () => {
       <h1 className="text-3xl font-bold mb-2 text-base-content">{blog.title}</h1>
       <div className="flex items-center gap-2 mb-4">
         <img src={blog.author.photoUrl} alt={blog.author.firstName} className="w-10 h-10 rounded-full" />
-        <span className="text-base font-medium text-base-content">{blog.author.firstName} {blog.author.lastName}</span>
+        <span
+          className="text-base font-medium text-base-content cursor-pointer hover:underline"
+          onClick={() => navigate(`/users/${blog.author._id}`)}
+          title="View Profile"
+        >
+          {blog.author.firstName} {blog.author.lastName}
+        </span>
         <span className="text-xs text-neutral ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
@@ -253,7 +277,7 @@ const BlogDetails = () => {
       <div className="prose max-w-none mb-6 text-base-content dark:text-base-content">
         <pre className="whitespace-pre-wrap break-words font-sans bg-transparent p-0 m-0 border-0 shadow-none">{blog.content}</pre>
       </div>
-      <div className="flex items-center gap-6 mb-6 text-neutral-content">
+      <div className="flex items-center gap-6 mb-6 text-neutral-content" ref={likeSectionRef}>
         {/* Like Button */}
         <button
           className={`flex items-center gap-2 text-2xl transition-transform duration-150 cursor-pointer ${likedByUser ? "text-red-500 scale-110" : "text-base-content hover:text-red-400"}`}
@@ -374,7 +398,6 @@ const BlogDetails = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <img src={comment.user.photoUrl} alt={comment.user.firstName} className="w-7 h-7 rounded-full" />
                     <span className="font-medium text-sm text-base-content">{comment.user.firstName} {comment.user.lastName}</span>
-                    <span className="text-xs text-neutral ml-auto">{new Date(comment.createdAt).toLocaleDateString()}</span>
                   </div>
                   <p className="text-base-content text-sm mb-2">{comment.content}</p>
                   <div className="flex items-center gap-3 text-xs text-neutral-content">

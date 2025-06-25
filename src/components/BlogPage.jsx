@@ -9,7 +9,7 @@ import { FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
 import { addConnections } from "../utils/conectionSlice";
 import Spinner from "./Spinner";
 
-const Feed = () => {
+const BlogPage = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +23,6 @@ const Feed = () => {
   const dispatch = useDispatch();
   const [fetchingConnections, setFetchingConnections] = useState(false);
 
-  // Fetch connections only when needed
   useEffect(() => {
     if (filter === "friends" && connections.length === 0 && !fetchingConnections) {
       setFetchingConnections(true);
@@ -38,7 +37,6 @@ const Feed = () => {
     // eslint-disable-next-line
   }, [filter, dispatch]);
 
-  // Fetch blogs when page/filter/sort/user/connections.length changes
   useEffect(() => {
     const fetch = async () => {
       setLoading(true);
@@ -73,10 +71,8 @@ const Feed = () => {
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
 
-  // Sort & Filter Bar JSX
   const sortFilterBar = (
     <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 p-4 card bg-base-100/80 dark:bg-base-200/80 shadow-lg border border-base-200 dark:border-base-300 backdrop-blur-md">
-      {/* Sort Dropdown with Icon */}
       <div className="flex items-center gap-2 w-full md:w-auto flex-nowrap min-w-0">
         <button
           type="button"
@@ -85,11 +81,10 @@ const Feed = () => {
           className="btn btn-ghost btn-xs md:btn-sm text-lg text-base-content ml-0"
           onClick={() => setSort(sort === "desc" ? "asc" : "desc")}
         >
-          Sort: 
+          Sort:
           <FaSortAmountDown className={sort === "desc" ? "rotate-0" : "rotate-180 transition-transform duration-200"} />
         </button>
       </div>
-      {/* Filter Buttons */}
       <div className="flex gap-2 w-full md:w-auto justify-center">
         <button
           className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "all" ? "btn-primary text-primary-content" : "btn-ghost text-base-content"}`}
@@ -110,7 +105,6 @@ const Feed = () => {
           Friend Blogs
         </button>
       </div>
-      {/* Create Blog Button */}
       {user && (
         <button
           className="btn btn-success btn-sm md:btn-md rounded-full font-semibold shadow-md text-white ml-0 md:ml-4 w-full md:w-auto"
@@ -125,7 +119,6 @@ const Feed = () => {
   return (
     <div className="max-w-5xl mx-auto py-10 px-4">
       {sortFilterBar}
-      {/* Blog List Area */}
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[300px] w-full">
           <div className="flex justify-center items-center w-full mt-10">
@@ -208,7 +201,6 @@ const Feed = () => {
               </div>
             ))}
           </div>
-          {/* Pagination Controls */}
           <div className="flex justify-center items-center gap-4 mt-10">
             <button onClick={handlePrev} disabled={page === 1} className="px-4 py-2 rounded bg-primary text-primary-content disabled:opacity-50">Prev</button>
             <span>Page {page} of {totalPages}</span>
@@ -220,4 +212,4 @@ const Feed = () => {
   );
 };
 
-export default Feed;
+export default BlogPage; 

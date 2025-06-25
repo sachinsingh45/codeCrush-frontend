@@ -4,6 +4,7 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
+import { FaLinkedin, FaGithub } from "react-icons/fa";
 
 const EditProfile = ({ user, onClose }) => {
   const [firstName, setFirstName] = useState(user.firstName);
@@ -14,6 +15,8 @@ const EditProfile = ({ user, onClose }) => {
   const [about, setAbout] = useState(user.about || "");
   const [skills, setSkills] = useState(user.skills || []);
   const [newSkill, setNewSkill] = useState("");
+  const [linkedin, setLinkedin] = useState(user.linkedin || "");
+  const [github, setGithub] = useState(user.github || "");
   const [error, setError] = useState("");
   const [showToast, setShowToast] = useState(false);
   const dispatch = useDispatch();
@@ -25,7 +28,7 @@ const EditProfile = ({ user, onClose }) => {
     try {
       const res = await axios.patch(
         `${BASE_URL}/profile/edit`,
-        { firstName, lastName, photoUrl, age, gender, about, skills },
+        { firstName, lastName, photoUrl, age, gender, about, skills, linkedin, github },
         { withCredentials: true }
       );
       dispatch(addUser(res?.data?.data));
@@ -135,6 +138,35 @@ const EditProfile = ({ user, onClose }) => {
               onChange={(e) => setAbout(e.target.value)}
               rows={2}
             ></textarea>
+          </div>
+
+          {/* Social Links Grouped */}
+          <div className="form-group flex flex-col gap-2 mt-2">
+            <label className="text-xs font-medium text-gray-600 mb-1">Social Links</label>
+            <div className="flex gap-2 w-full">
+              <div className="flex-1 flex items-center gap-2">
+                <FaLinkedin className="text-blue-600 text-lg" />
+                <input
+                  id="linkedin"
+                  type="text"
+                  value={linkedin}
+                  className="input input-bordered input-sm w-full"
+                  onChange={(e) => setLinkedin(e.target.value)}
+                  placeholder="LinkedIn URL"
+                />
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <FaGithub className="text-gray-800 text-lg" />
+                <input
+                  id="github"
+                  type="text"
+                  value={github}
+                  className="input input-bordered input-sm w-full"
+                  onChange={(e) => setGithub(e.target.value)}
+                  placeholder="GitHub URL"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Skills Section */}

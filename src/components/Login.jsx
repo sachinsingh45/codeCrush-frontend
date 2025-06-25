@@ -45,6 +45,17 @@ const Login = () => {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (isLoginForm) {
+        handleLogin();
+      } else {
+        handleSignUp();
+      }
+    }
+  };
+
   return (
     <div className="mt-20 flex justify-center items-center">
       <div className="flex flex-col lg:flex-row w-full max-w-screen-lg rounded-lg gap-4 justify-center">
@@ -63,8 +74,8 @@ const Login = () => {
         )}
 
         {/* Right side - Form */}
-        <div className="w-full lg:w-1/2 p-8 flex flex-col justify-center items-center glass">
-          <h2 className="text-3xl font-bold text-white mb-6">{isLoginForm ? "Login" : "Sign Up"}</h2>
+        <div className="w-full lg:w-1/2 p-8 flex flex-col justify-center items-center glass bg-base-100 dark:bg-base-200">
+          <h2 className="text-3xl font-bold text-base-content mb-6">{isLoginForm ? "Login" : "Sign Up"}</h2>
           <div className="w-full">
             {!isLoginForm && (
               <>
@@ -77,6 +88,7 @@ const Login = () => {
                     value={firstName}
                     className="input input-bordered w-full"
                     onChange={(e) => setFirstName(e.target.value)}
+                    onKeyDown={handleKeyDown}
                   />
                 </label>
                 <label className="form-control w-full my-2">
@@ -88,6 +100,7 @@ const Login = () => {
                     value={lastName}
                     className="input input-bordered w-full"
                     onChange={(e) => setLastName(e.target.value)}
+                    onKeyDown={handleKeyDown}
                   />
                 </label>
               </>
@@ -101,6 +114,7 @@ const Login = () => {
                 value={emailId}
                 className="input input-bordered w-full"
                 onChange={(e) => setEmailId(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
             </label>
             <label className="form-control w-full my-2 relative ">
@@ -112,6 +126,7 @@ const Login = () => {
                 value={password}
                 className=" input input-bordered w-full"
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
               />
               <div
                 className="absolute right-2  cursor-pointer -mt-7"
@@ -121,7 +136,7 @@ const Login = () => {
               </div>
             </label>
           </div>
-          <p className="text-red-500 text-center my-2">{error}</p>
+          <p className="text-error text-center my-2">{error}</p>
           <div className="card-actions justify-center mt-6">
             <button
               className="btn btn-primary w-full py-3"

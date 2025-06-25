@@ -18,7 +18,7 @@ const NavBar = () => {
 
   // Theme toggle handler
   const toggleTheme = () => {
-    const newTheme = theme === "retro" ? "abyss" : "retro";
+    const newTheme = theme === "abyss" ? "lemonade" : "abyss";
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     localStorage.setItem("theme", newTheme);
@@ -141,7 +141,11 @@ const NavBar = () => {
             <FaSearch className="text-lg" />
             Find Friends
           </Link>
-          <Link to="/chats" onClick={() => setNavOpen(false)} className="btn btn-ghost btn-sm w-full flex items-center gap-2 justify-start">
+          <Link to="/blogs" onClick={() => setNavOpen(false)} className="btn btn-ghost btn-sm w-full flex items-center gap-2 justify-start">
+            <svg className="text-base" width="1em" height="1em" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 19.5V6.75C4 5.23122 5.23122 4 6.75 4H17.25C18.7688 4 20 5.23122 20 6.75V19.5M4 19.5C4 20.3284 4.67157 21 5.5 21H18.5C19.3284 21 20 20.3284 20 19.5M4 19.5V17.25C4 15.7312 5.23122 14.5 6.75 14.5H17.25C18.7688 14.5 20 15.7312 20 17.25V19.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Blogs
+          </Link>
+          <Link to="/chat" onClick={() => setNavOpen(false)} className="btn btn-ghost btn-sm w-full flex items-center gap-2 justify-start">
             <FaComments className="text-base" />
             Inbox
           </Link>

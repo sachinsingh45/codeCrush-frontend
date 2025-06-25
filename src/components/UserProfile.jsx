@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import Spinner from "./Spinner";
-import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt } from "react-icons/fa";
+import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt, FaLinkedin, FaGithub } from "react-icons/fa";
 import { useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 const statIcons = [
   <FaBlog className="text-blue-500 text-xl mx-auto" />,
@@ -19,11 +20,13 @@ const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const connections = useSelector((store) => store.connections) || [];
+  const loggedInUser = useSelector((store) => store.user);
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [relationship, setRelationship] = useState('unknown');
 
   useEffect(() => {
     if (!id) return;
@@ -31,14 +34,16 @@ const UserProfile = () => {
       setLoading(true);
       setError("");
       try {
-        const [userRes, statsRes, blogsRes] = await Promise.all([
+        const [userRes, statsRes, blogsRes, relRes] = await Promise.all([
           axios.get(`${BASE_URL}/users/${id}`),
           axios.get(`${BASE_URL}/users/${id}/blog-stats`),
-          axios.get(`${BASE_URL}/users/${id}/blogs`)
+          axios.get(`${BASE_URL}/users/${id}/blogs`),
+          axios.get(`${BASE_URL}/user/relationship/${id}`, { withCredentials: true })
         ]);
         setUser(userRes.data.data);
         setStats(statsRes.data.data);
         setBlogs(blogsRes.data.data);
+        setRelationship(relRes.data.status);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load user profile");
       } finally {
@@ -48,12 +53,23 @@ const UserProfile = () => {
     fetchUserProfile();
   }, [id]);
 
+  useEffect(() => {
+    // If viewing own profile, redirect to /profile
+    if (loggedInUser && id === loggedInUser._id) {
+      navigate('/profile', { replace: true });
+      return;
+    }
+  }, [loggedInUser, id, navigate]);
+
   if (loading) return <div className="flex justify-center items-center min-h-[300px]"><Spinner size={48} /></div>;
   if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
   if (!user) return null;
 
   // Check if the viewed user is a friend/connection
   const isFriend = connections.some(conn => conn._id === id);
+
+  // Defensive: always default blogs to an array
+  const safeBlogs = Array.isArray(blogs) ? blogs : [];
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-2 sm:px-4">
@@ -81,6 +97,34 @@ const UserProfile = () => {
               )}
             </div>
             <p className="text-base-content text-center mb-3 max-w-xs xs:max-w-sm sm:max-w-lg text-base">{user.about || <span className="italic text-gray-400">No details available.</span>}</p>
+            {(user.linkedin || user.github) && (
+              <div className="flex gap-4 mt-2">
+                {user.linkedin && (
+                  <a
+                    href={user.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-700 hover:underline"
+                    title="View LinkedIn Profile"
+                  >
+                    <FaLinkedin className="text-blue-600 text-xl" />
+                    <span className="break-all">LinkedIn</span>
+                  </a>
+                )}
+                {user.github && (
+                  <a
+                    href={user.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-gray-800 hover:underline"
+                    title="View GitHub Profile"
+                  >
+                    <FaGithub className="text-gray-800 text-xl" />
+                    <span className="break-all">GitHub</span>
+                  </a>
+                )}
+              </div>
+            )}
             {user.skills && user.skills.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2 justify-center">
                 {user.skills.map((skill, idx) => (
@@ -94,14 +138,87 @@ const UserProfile = () => {
         </div>
       </div>
 
-      {/* Chat Button for Friends - outside the description box */}
-      {isFriend && (
+      {/* Relationship Actions */}
+      {relationship === 'connection' && (
         <div className="flex justify-center mb-8">
           <button
             className="btn btn-primary px-6 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition flex items-center gap-2"
             onClick={() => navigate(`/chat/${id}`)}
           >
             <FaComment className="mr-2" /> Chat
+          </button>
+        </div>
+      )}
+      {relationship === 'request_sent' && (
+        <div className="flex justify-center mb-8 gap-4">
+          <button className="btn btn-warning px-6 py-2 rounded-full font-semibold shadow-md" disabled>
+            Request Sent
+          </button>
+          <button className="btn btn-error px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
+            try {
+              const res = await axios.delete(`${BASE_URL}/request/cancel/${id}`, { withCredentials: true });
+              setRelationship('unknown');
+              toast.success(res.data.message || 'Connection request cancelled.');
+            } catch (err) {
+              toast.error(err?.response?.data?.message || 'Failed to cancel connection request.');
+            }
+          }}>
+            Cancel Request
+          </button>
+        </div>
+      )}
+      {relationship === 'request_got' && (
+        <div className="flex justify-center mb-8 gap-4">
+          <button className="btn btn-success px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
+            // Accept request
+            try {
+              const res = await axios.get(`${BASE_URL}/user/requests/received`, { withCredentials: true });
+              const req = res.data.data.find(r => r.fromUserId._id === id);
+              if (!req) {
+                toast.error('Request not found.');
+                return;
+              }
+              const reviewRes = await axios.post(`${BASE_URL}/request/review/accept/${req._id}`, {}, { withCredentials: true });
+              setRelationship('connection');
+              toast.success(reviewRes.data.message || 'Connection request accepted!');
+            } catch (err) {
+              toast.error(err?.response?.data?.message || 'Failed to accept request.');
+            }
+          }}>
+            Accept
+          </button>
+          <button className="btn btn-error px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
+            // Reject request
+            try {
+              const res = await axios.get(`${BASE_URL}/user/requests/received`, { withCredentials: true });
+              const req = res.data.data.find(r => r.fromUserId._id === id);
+              if (!req) {
+                toast.error('Request not found.');
+                return;
+              }
+              const reviewRes = await axios.post(`${BASE_URL}/request/review/reject/${req._id}`, {}, { withCredentials: true });
+              setRelationship('unknown');
+              toast.success(reviewRes.data.message || 'Connection request rejected.');
+            } catch (err) {
+              toast.error(err?.response?.data?.message || 'Failed to reject request.');
+            }
+          }}>
+            Reject
+          </button>
+        </div>
+      )}
+      {relationship === 'unknown' && (
+        <div className="flex justify-center mb-8">
+          <button className="btn btn-primary px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
+            try {
+              const res = await axios.post(`${BASE_URL}/request/send/${id}`, {}, { withCredentials: true });
+              setRelationship('request_sent');
+              toast.success(res.data.message || 'Connection request sent!');
+            } catch (err) {
+              toast.error(err?.response?.data?.message || 'Failed to send connection request.');
+            }
+          }}>
+            Send Request
           </button>
         </div>
       )}
@@ -137,14 +254,14 @@ const UserProfile = () => {
           <h2 className="text-xl xs:text-2xl font-bold"><FaRegFileAlt className="inline text-blue-500 mr-2" /> Blogs</h2>
           <div className="flex-grow border-t border-gray-200 ml-2"></div>
         </div>
-        {blogs.length === 0 ? (
+        {safeBlogs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 xs:py-10">
             <img src="/empty-feed.png" alt="No blogs" className="w-24 h-24 xs:w-32 xs:h-32 opacity-70 mb-4" />
             <div className="text-gray-500 text-base xs:text-lg font-medium text-center">No blogs found for this user.</div>
           </div>
         ) : (
           <div className="grid grid-cols-1 xs:grid-cols-2 gap-4 xs:gap-6">
-            {blogs.map((blog) => (
+            {safeBlogs.map((blog) => (
               <div
                 key={blog._id}
                 className="group bg-white dark:bg-base-200 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden hover:scale-[1.03] hover:shadow-2xl transition-all flex flex-col animate-fade-in cursor-pointer"

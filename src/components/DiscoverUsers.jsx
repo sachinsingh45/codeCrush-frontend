@@ -5,24 +5,21 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import UserCard from "./UserCard";
 import Spinner from "./Spinner";
+import { useSelector } from "react-redux";
 
 const DiscoverUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [pendingRequests, setPendingRequests] = useState([]);
+  const loggedInUser = useSelector((store) => store.user);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       setError("");
       try {
-        const [usersRes, requestsRes] = await Promise.all([
-          axios.get(`${BASE_URL}/feed`, { withCredentials: true }),
-          axios.get(`${BASE_URL}/user/requests/received`, { withCredentials: true })
-        ]);
-        setUsers(usersRes.data.data);
-        setPendingRequests(requestsRes.data.data.map(r => r.fromUserId._id));
+        const res = await axios.get(`${BASE_URL}/feed`, { withCredentials: true });
+        setUsers(res.data.data);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load users");
       } finally {
@@ -31,6 +28,8 @@ const DiscoverUsers = () => {
     };
     fetchData();
   }, []);
+
+  const filteredUsers = (users || []).filter(user => user._id !== loggedInUser?._id);
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-2 sm:px-4">
@@ -51,8 +50,8 @@ const DiscoverUsers = () => {
         </div>
       ) : (
         <div className="flex flex-col gap-8 w-full">
-          {users.map((user) => (
-            <UserCard key={user._id} user={user} hasSentRequest={pendingRequests.includes(user._id)} />
+          {filteredUsers.map((user) => (
+            user ? <UserCard key={user._id} user={user} /> : null
           ))}
         </div>
       )}

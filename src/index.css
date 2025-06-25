@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-    themes: retro --default, abyss --prefersdark;
+    themes: lemonade --default, abyss --prefersdark;
 }
 
 /* Ensure all buttons have pointer cursor by default */

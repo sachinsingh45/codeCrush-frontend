@@ -61,7 +61,7 @@ const Connections = () => {
           return (
             <div
               key={_id}
-              className="group bg-white dark:bg-base-200 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.03] transition-all cursor-pointer flex flex-col items-center p-4 sm:p-6 relative overflow-hidden min-h-[320px] sm:min-h-[340px]"
+              className="group bg-base-100 dark:bg-base-200 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.03] transition-all cursor-pointer flex flex-col items-center p-4 sm:p-6 relative overflow-hidden min-h-[320px] sm:min-h-[340px] w-full"
               onClick={() => window.location.href = `/users/${_id}`}
               tabIndex={0}
               role="button"
