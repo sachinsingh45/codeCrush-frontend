@@ -10,3 +10,7 @@ button, [role="button"] {
 button:disabled, [aria-disabled="true"] {
   cursor: not-allowed;
 }
+
+html, body {
+  overflow-x: hidden;
+}

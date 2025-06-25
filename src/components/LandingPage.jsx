@@ -69,7 +69,7 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-base-600 font-sans transition-colors overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-base-600 font-sans transition-colors">
       {/* Hero Section */}
       <section
         id="hero-bg-parallax"
@@ -77,8 +77,8 @@ const LandingPage = () => {
         style={{
           background: "linear-gradient(120deg, var(--p)/10 0%, var(--s)/10 100%)",
           backgroundAttachment: "fixed",
-          width: '100%',
-          minWidth: '0',
+          width: '100vw',
+          minWidth: '100vw',
           position: 'relative',
         }}
         aria-label="Hero section"
@@ -86,7 +86,7 @@ const LandingPage = () => {
         {/* Animated SVG Wave Background */}
         <svg
           className="absolute top-0 left-0 w-full h-32 md:h-48 z-0"
-          style={{ width: '100%', minWidth: 0, maxWidth: '100%', left: 0 }}
+          style={{ width: '100vw', minWidth: '100vw', maxWidth: '100vw', left: 0 }}
           viewBox="0 0 1440 320"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -241,7 +241,7 @@ const LandingPage = () => {
 
       {/* Call to Action */}
       <section className="w-full max-w-4xl mx-auto px-4 sm:px-8 py-20">
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-primary bg-gradient-to-br from-primary via-secondary to-primary p-1">
+        <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-primary bg-gradient-to-br from-base-200 p-1">
           <div className="relative bg-base bg-opacity-90 rounded-3xl p-12 flex flex-col md:flex-row items-center justify-between gap-8">
             {/* Soft Glow Overlay */}
             <div className="absolute inset-0 pointer-events-none rounded-3xl" style={{boxShadow: '0 0 80px 10px var(--primary)', opacity: 0.15, zIndex: 1}} />

@@ -49,7 +49,11 @@ const BlogPage = () => {
         }
         let res = await axios.get(url, { params });
         let data = res.data.data;
-        if (filter === "friends" && connections.length > 0) {
+        if (filter === "friends") {
+          if (fetchingConnections || connections.length === 0) {
+            setLoading(false);
+            return;
+          }
           const friendIds = connections.map(c => c._id);
           data = data.filter(b => friendIds.includes(b.author._id));
         }
@@ -66,7 +70,7 @@ const BlogPage = () => {
     };
     fetch();
     // eslint-disable-next-line
-  }, [page, filter, sort, user, connections.length]);
+  }, [page, filter, sort, user, connections.length, fetchingConnections]);
 
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
@@ -127,9 +131,9 @@ const BlogPage = () => {
         </div>
       ) : error ? (
         <div className="flex justify-center mt-20 text-red-500 w-full">{error}</div>
-      ) : fetchingConnections ? (
+      ) : fetchingConnections && filter === "friends" ? (
         <div className="flex justify-center items-center min-h-[200px] w-full">
-          <Skeleton height={40} width={200} />
+          <Spinner size={40} />
           <span className="ml-4 text-base-content text-lg font-semibold">Loading your connections...</span>
         </div>
       ) : !blogs.length ? (
@@ -192,10 +196,10 @@ const BlogPage = () => {
                     <span className="text-xs text-neutral ml-auto">{new Date(blog.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center gap-4 mt-auto text-sm text-neutral-content border-t border-base-200 dark:border-base-300 pt-3">
-                    <span title="Likes" className="flex items-center gap-1"><span role="img" aria-label="like">👍</span> {blog.likeCount || 0}</span>
-                    <span title="Comments" className="flex items-center gap-1"><span role="img" aria-label="comments">💬</span> {blog.commentCount || 0}</span>
-                    <span title="Shares" className="flex items-center gap-1"><span role="img" aria-label="shares">🔗</span> {blog.shareCount || 0}</span>
-                    <span className="ml-auto" title="Read time">⏱ {blog.readTime} min</span>
+                    <span title="Likes" className="text-base-content flex items-center gap-1"><span role="img" aria-label="like">👍</span> {blog.likeCount || 0}</span>
+                    <span title="Comments" className="text-base-content flex items-center gap-1"><span role="img" aria-label="comments">💬</span> {blog.commentCount || 0}</span>
+                    <span title="Shares" className="text-base-content flex items-center gap-1"><span role="img" aria-label="shares">🔗</span> {blog.shareCount || 0}</span>
+                    <span className="text-base-content ml-auto" title="Read time">⏱ {blog.readTime} min</span>
                   </div>
                 </div>
               </div>
