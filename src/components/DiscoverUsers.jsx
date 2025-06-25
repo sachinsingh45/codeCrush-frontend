@@ -33,18 +33,24 @@ const DiscoverUsers = () => {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-3xl font-bold mb-8">Discover Developers</h1>
+    <div className="max-w-6xl mx-auto py-10 px-2 sm:px-4">
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-8 text-center tracking-tight text-primary drop-shadow-sm">Discover Developers</h1>
       {loading ? (
-        <div className="flex justify-center items-center w-full min-h-[200px]">
+        <div className="flex flex-col items-center justify-center w-full min-h-[200px] py-10">
           <Spinner size={48} />
+          <span className="mt-4 text-base-content text-lg font-semibold">Loading developers...</span>
         </div>
       ) : error ? (
-        <div className="text-red-500">{error}</div>
+        <div className="flex flex-col items-center justify-center w-full min-h-[200px] py-10">
+          <span className="text-red-500 text-lg font-semibold">{error}</span>
+        </div>
       ) : users.length === 0 ? (
-        <div className="text-gray-500">No new users found.</div>
+        <div className="flex flex-col items-center justify-center w-full min-h-[200px] py-10">
+          <img src="/empty-feed.png" alt="No users" className="w-28 h-28 opacity-70 mb-4" />
+          <span className="text-gray-500 text-lg font-medium text-center">No new users found.</span>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-col gap-8 w-full">
           {users.map((user) => (
             <UserCard key={user._id} user={user} hasSentRequest={pendingRequests.includes(user._id)} />
           ))}

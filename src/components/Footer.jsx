@@ -1,9 +1,36 @@
 import { FaGithub, FaLinkedin, FaInstagram } from "react-icons/fa"; // Importing the required icons
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { FaArrowUp } from "react-icons/fa";
 
 const Footer = () => {
+  const [showScroll, setShowScroll] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScroll(window.scrollY > 200);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <footer className="bg-base-100 text-base-content p-8 mt-10 border-t border-gray-300 dark:border-gray-700">
+      {showScroll && (
+        <div className="w-full flex justify-center mb-6">
+          <button
+            onClick={scrollToTop}
+            className="bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary-focus transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+            aria-label="Scroll to top"
+          >
+            <FaArrowUp size={22} />
+          </button>
+        </div>
+      )}
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center">
         {/* Left Section */}
         <div className="flex flex-col items-center md:items-start space-y-4 md:space-y-0">

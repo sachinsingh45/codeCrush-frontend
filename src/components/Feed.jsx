@@ -85,25 +85,26 @@ const Feed = () => {
           className="btn btn-ghost btn-xs md:btn-sm text-lg text-base-content ml-0"
           onClick={() => setSort(sort === "desc" ? "asc" : "desc")}
         >
+          Sort: 
           <FaSortAmountDown className={sort === "desc" ? "rotate-0" : "rotate-180 transition-transform duration-200"} />
         </button>
       </div>
       {/* Filter Buttons */}
       <div className="flex gap-2 w-full md:w-auto justify-center">
         <button
-          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "all" ? "btn-primary text-white" : "btn-ghost text-base-content"}`}
+          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "all" ? "btn-primary text-primary-content" : "btn-ghost text-base-content"}`}
           onClick={() => { setFilter("all"); setPage(1); }}
         >
           All Blogs
         </button>
         <button
-          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "my" ? "btn-primary text-white" : "btn-ghost text-base-content"}`}
+          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "my" ? "btn-primary text-primary-content" : "btn-ghost text-base-content"}`}
           onClick={() => { setFilter("my"); setPage(1); }}
         >
           My Blogs
         </button>
         <button
-          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "friends" ? "btn-primary text-white" : "btn-ghost text-base-content"}`}
+          className={`btn btn-sm md:btn-md rounded-full font-semibold transition-all border-2 shadow-sm focus:outline-none ${filter === "friends" ? "btn-primary text-primary-content" : "btn-ghost text-base-content"}`}
           onClick={() => { setFilter("friends"); setPage(1); }}
         >
           Friend Blogs
@@ -209,9 +210,9 @@ const Feed = () => {
           </div>
           {/* Pagination Controls */}
           <div className="flex justify-center items-center gap-4 mt-10">
-            <button onClick={handlePrev} disabled={page === 1} className="px-4 py-2 rounded bg-gray-200 disabled:opacity-50">Prev</button>
+            <button onClick={handlePrev} disabled={page === 1} className="px-4 py-2 rounded bg-primary text-primary-content disabled:opacity-50">Prev</button>
             <span>Page {page} of {totalPages}</span>
-            <button onClick={handleNext} disabled={page === totalPages} className="px-4 py-2 rounded bg-gray-200 disabled:opacity-50">Next</button>
+            <button onClick={handleNext} disabled={page === totalPages} className="px-4 py-2 rounded bg-primary text-primary-content disabled:opacity-50">Next</button>
           </div>
         </>
       )}

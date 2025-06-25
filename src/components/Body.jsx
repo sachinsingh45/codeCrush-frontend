@@ -32,6 +32,11 @@ const Body = () => {
     fetchUser();
   }, []);
 
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [location.pathname]);
+
   return (
     <div>
       <NavBar />

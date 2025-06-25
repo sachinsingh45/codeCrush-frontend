@@ -2,3 +2,11 @@
 @plugin "daisyui" {
     themes: retro --default, abyss --prefersdark;
 }
+
+/* Ensure all buttons have pointer cursor by default */
+button, [role="button"] {
+  cursor: pointer;
+}
+button:disabled, [aria-disabled="true"] {
+  cursor: not-allowed;
+}

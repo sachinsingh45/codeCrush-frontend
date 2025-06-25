@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"; 
+import { useEffect, useState, useRef } from "react"; 
 import { useParams } from "react-router-dom";
 import { createSocketConnection } from "../utils/socket";
 import { useSelector, useDispatch } from "react-redux";
@@ -31,6 +31,8 @@ const Chat = () => {
   // Track which blogs have been shared in this session (to avoid double increment)
   const [sharedInSession, setSharedInSession] = useState({});
   const [shareLoadingBlogId, setShareLoadingBlogId] = useState(null);
+
+  const messagesEndRef = useRef(null);
 
   const fetchConnections = async () => {
     try {
@@ -193,6 +195,13 @@ const Chat = () => {
     navigate(`/blogs/${blogId}`);
   };
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, selectedUserId]);
+
   return (
     <form onSubmit={e => { e.preventDefault(); sendMessage(); }}>
       <div className={`w-full h-[88vh] flex bg-base-200/80 dark:bg-base-200/80 ${isSidebarOpen ? "fixed" : "relative"} rounded-2xl shadow-xl overflow-hidden backdrop-blur-md` + (selectedUserId ? ' sm:flex' : ' flex') } style={{ minHeight: '88vh', maxHeight: '88vh', overflow: 'hidden' }}>
@@ -319,7 +328,16 @@ const Chat = () => {
               </>
             )}
             <h1 className="text-lg font-bold text-primary-content dark:text-base-content tracking-wide">
-              {selectedUserId ? getConnectionName(selectedUserId) : "Select a Connection"}
+              {selectedUserId ? (
+                <Link
+                  to={`/users/${selectedUserId}`}
+                  className="hover:underline hover:text-primary transition-colors duration-200"
+                >
+                  {getConnectionName(selectedUserId)}
+                </Link>
+              ) : (
+                "Select a Connection"
+              )}
             </h1>
           </div>
 
@@ -402,7 +420,13 @@ const Chat = () => {
                         );
                       })()
                     ) : (
-                      <div className={`chat-bubble ${user.firstName === msg.firstName ? "bg-gradient-to-br from-primary to-secondary text-white" : "bg-base-300 dark:bg-base-100 text-base-content dark:text-base-content"} shadow rounded-xl px-4 py-2 max-w-xs md:max-w-sm transition-all duration-200 hover:scale-[1.01]`}> 
+                      <div
+                        className={`chat-bubble px-4 py-2 max-w-xs md:max-w-sm transition-all duration-200 hover:scale-[1.01] rounded-xl shadow border
+                          ${user.firstName === msg.firstName
+                            ? 'bg-primary text-primary-content border-primary'
+                            : 'bg-base-200 dark:bg-base-100 text-base-content dark:text-base-content border-base-300 dark:border-base-200'}
+                        `}
+                      >
                         {msg.text}
                       </div>
                     )}
@@ -418,6 +442,7 @@ const Chat = () => {
                 <h2 className="text-base sm:text-lg text-base-content mb-2">No messages yet. Start the conversation!</h2>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {selectedUserId && (
@@ -436,7 +461,6 @@ const Chat = () => {
           )}
         </main>
       </div>
-      <Footer />
     </form>
   );
 };

@@ -4,6 +4,7 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import Spinner from "./Spinner";
 import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt } from "react-icons/fa";
+import { useSelector } from "react-redux";
 
 const statIcons = [
   <FaBlog className="text-blue-500 text-xl mx-auto" />,
@@ -17,6 +18,7 @@ const statIcons = [
 const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const connections = useSelector((store) => store.connections) || [];
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [blogs, setBlogs] = useState([]);
@@ -49,6 +51,9 @@ const UserProfile = () => {
   if (loading) return <div className="flex justify-center items-center min-h-[300px]"><Spinner size={48} /></div>;
   if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
   if (!user) return null;
+
+  // Check if the viewed user is a friend/connection
+  const isFriend = connections.some(conn => conn._id === id);
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-2 sm:px-4">
@@ -88,6 +93,18 @@ const UserProfile = () => {
           </div>
         </div>
       </div>
+
+      {/* Chat Button for Friends - outside the description box */}
+      {isFriend && (
+        <div className="flex justify-center mb-8">
+          <button
+            className="btn btn-primary px-6 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition flex items-center gap-2"
+            onClick={() => navigate(`/chat/${id}`)}
+          >
+            <FaComment className="mr-2" /> Chat
+          </button>
+        </div>
+      )}
 
       {/* Blog Stats Section */}
       <div className="mt-10">
