@@ -139,7 +139,7 @@ const UserProfile = () => {
       </div>
 
       {/* Relationship Actions */}
-      {relationship === 'connection' && (
+      {isFriend ? (
         <div className="flex justify-center mb-8">
           <button
             className="btn btn-primary px-6 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition flex items-center gap-2"
@@ -148,80 +148,24 @@ const UserProfile = () => {
             <FaComment className="mr-2" /> Chat
           </button>
         </div>
-      )}
-      {relationship === 'request_sent' && (
-        <div className="flex justify-center mb-8 gap-4">
-          <button className="btn btn-warning px-6 py-2 rounded-full font-semibold shadow-md" disabled>
-            Request Sent
-          </button>
-          <button className="btn btn-error px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
-            try {
-              const res = await axios.delete(`${BASE_URL}/request/cancel/${id}`, { withCredentials: true });
-              setRelationship('unknown');
-              toast.success(res.data.message || 'Connection request cancelled.');
-            } catch (err) {
-              toast.error(err?.response?.data?.message || 'Failed to cancel connection request.');
-            }
-          }}>
-            Cancel Request
-          </button>
-        </div>
-      )}
-      {relationship === 'request_got' && (
-        <div className="flex justify-center mb-8 gap-4">
-          <button className="btn btn-success px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
-            // Accept request
-            try {
-              const res = await axios.get(`${BASE_URL}/user/requests/received`, { withCredentials: true });
-              const req = res.data.data.find(r => r.fromUserId._id === id);
-              if (!req) {
-                toast.error('Request not found.');
-                return;
-              }
-              const reviewRes = await axios.post(`${BASE_URL}/request/review/accept/${req._id}`, {}, { withCredentials: true });
-              setRelationship('connection');
-              toast.success(reviewRes.data.message || 'Connection request accepted!');
-            } catch (err) {
-              toast.error(err?.response?.data?.message || 'Failed to accept request.');
-            }
-          }}>
-            Accept
-          </button>
-          <button className="btn btn-error px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
-            // Reject request
-            try {
-              const res = await axios.get(`${BASE_URL}/user/requests/received`, { withCredentials: true });
-              const req = res.data.data.find(r => r.fromUserId._id === id);
-              if (!req) {
-                toast.error('Request not found.');
-                return;
-              }
-              const reviewRes = await axios.post(`${BASE_URL}/request/review/reject/${req._id}`, {}, { withCredentials: true });
-              setRelationship('unknown');
-              toast.success(reviewRes.data.message || 'Connection request rejected.');
-            } catch (err) {
-              toast.error(err?.response?.data?.message || 'Failed to reject request.');
-            }
-          }}>
-            Reject
-          </button>
-        </div>
-      )}
-      {relationship === 'unknown' && (
+      ) : relationship === 'unknown' ? (
         <div className="flex justify-center mb-8">
-          <button className="btn btn-primary px-6 py-2 rounded-full font-semibold shadow-md" onClick={async () => {
-            try {
-              const res = await axios.post(`${BASE_URL}/request/send/${id}`, {}, { withCredentials: true });
-              setRelationship('request_sent');
-              toast.success(res.data.message || 'Connection request sent!');
-            } catch (err) {
-              toast.error(err?.response?.data?.message || 'Failed to send connection request.');
-            }
-          }}>
-            Send Request
+          <button
+            className="btn btn-success px-6 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition flex items-center gap-2"
+            onClick={async () => {
+              try {
+                const res = await axios.post(`${BASE_URL}/request/send/${id}`, {}, { withCredentials: true });
+                setRelationship('request_sent');
+                toast.success(res.data.message || 'Connection request sent!');
+              } catch (err) {
+                toast.error(err?.response?.data?.message || 'Failed to send connection request.');
+              }
+            }}
+          >
+            <FaUser className="mr-2" /> Request
           </button>
         </div>
-      )}
+      ) : null}
 
       {/* Blog Stats Section */}
       <div className="mt-10">

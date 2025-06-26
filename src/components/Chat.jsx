@@ -11,6 +11,9 @@ import { FaRegSadTear, FaCommentSlash } from "react-icons/fa";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import Footer from "./Footer";
+import Highlight, { defaultProps } from "prism-react-renderer";
+import dracula from "prism-react-renderer/themes/dracula";
+import duotoneLight from "prism-react-renderer/themes/duotoneLight";
 
 const Chat = () => {
   const { targetUserId: paramTargetUserId } = useParams();
@@ -20,6 +23,7 @@ const Chat = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [blogPreviews, setBlogPreviews] = useState({});
   const [search, setSearch] = useState("");
+  const [codeReviewPreviews, setCodeReviewPreviews] = useState({});
 
   const user = useSelector((store) => store.user);
   const connections = useSelector((store) => store.connections);
@@ -137,14 +141,30 @@ const Chat = () => {
     return null;
   };
 
+  // Helper to detect and extract code review link from message
+  const parseCodeReviewLink = (text) => {
+    const match = text.match(/Check out this code review: (https?:\/\/[^\s]+)/);
+    if (match) {
+      return match[1];
+    }
+    return null;
+  };
+
   // Helper to extract blog ID from URL
   const extractBlogId = (url) => {
     const match = url.match(/\/blogs\/([a-zA-Z0-9]+)/);
     return match ? match[1] : null;
   };
 
-  // Fetch blog preview if needed
+  // Helper to extract code review snippet ID from URL
+  const extractSnippetId = (url) => {
+    const match = url.match(/\/code-review\/([a-zA-Z0-9]+)/);
+    return match ? match[1] : null;
+  };
+
+  // Fetch blog and code review previews if needed
   useEffect(() => {
+    // Blog previews
     const blogLinks = messages
       .map((msg) => parseBlogLink(msg.text))
       .filter(Boolean);
@@ -157,6 +177,22 @@ const Chat = () => {
           setBlogPreviews((prev) => ({ ...prev, [blogId]: { loading: false, data: res.data.data } }));
         } catch {
           setBlogPreviews((prev) => ({ ...prev, [blogId]: { loading: false, error: true } }));
+        }
+      }
+    });
+    // Code review previews
+    const snippetLinks = messages
+      .map((msg) => parseCodeReviewLink(msg.text))
+      .filter(Boolean);
+    snippetLinks.forEach(async (link) => {
+      const snippetId = extractSnippetId(link);
+      if (snippetId && !codeReviewPreviews[snippetId]) {
+        setCodeReviewPreviews((prev) => ({ ...prev, [snippetId]: { loading: true } }));
+        try {
+          const res = await axios.get(`${BASE_URL}/code-review/snippet/${snippetId}`);
+          setCodeReviewPreviews((prev) => ({ ...prev, [snippetId]: { loading: false, data: res.data.snippet } }));
+        } catch {
+          setCodeReviewPreviews((prev) => ({ ...prev, [snippetId]: { loading: false, error: true } }));
         }
       }
     });
@@ -346,6 +382,125 @@ const Chat = () => {
               {messages.length > 0 ? (
                 messages.map((msg, index) => {
                   const blogLink = parseBlogLink(msg.text);
+                  const codeReviewLink = parseCodeReviewLink(msg.text);
+                  // Blog preview
+                  if (blogLink) {
+                    const blogId = extractBlogId(blogLink);
+                    const preview = blogPreviews[blogId];
+                    return (
+                      <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                        <div
+                          className="chat-bubble bg-base-100 dark:bg-base-200 border border-primary shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl"
+                          onClick={() => handleBlogCardClick(blogId)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="View blog details"
+                        >
+                          {(!preview || preview.loading) ? (
+                            <div className="p-3">
+                              <Skeleton height={18} width={"70%"} className="mb-1" />
+                              <Skeleton height={12} width={"50%"} className="mb-1" />
+                              <Skeleton height={80} className="rounded mb-1" />
+                            </div>
+                          ) : preview.error ? (
+                            <div className="p-3 text-error text-sm">Failed to load blog preview.</div>
+                          ) : (
+                            <div className="flex flex-col gap-1 p-3">
+                              <div className="font-semibold text-base-content dark:text-base-content mb-1 flex items-center gap-2">
+                                <img src={preview.data.author.photoUrl} alt="author" className="w-6 h-6 rounded-full border border-primary" />
+                                {preview.data.author.firstName} {preview.data.author.lastName}
+                              </div>
+                              {preview.data.featuredImage && (
+                                <img src={preview.data.featuredImage} alt={preview.data.title} className="w-full h-16 object-cover rounded mb-1" />
+                              )}
+                              <div className="text-base font-bold text-base-content dark:text-base-content line-clamp-2 mb-1">{preview.data.title}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-1">{preview.data.content.slice(0, 60)}...</div>
+                              <div className="flex gap-1 flex-wrap mb-1">
+                                {preview.data.tags.map((tag) => (
+                                  <span key={tag} className="badge badge-primary text-xs">#{tag}</span>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span>👍 {preview.data.likeCount || 0}</span>
+                                <span>💬 {preview.data.commentCount || 0}</span>
+                                <span>🔗 {preview.data.shareCount || 0} {shareLoadingBlogId === blogId && <span className="loading loading-spinner loading-xs ml-1"></span>}</span>
+                                <span className="ml-auto">⏱ {preview.data.readTime} min</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
+                          {msg.updatedAt && new Date(msg.updatedAt).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    );
+                  }
+                  // Code review preview
+                  if (codeReviewLink) {
+                    const snippetId = extractSnippetId(codeReviewLink);
+                    const preview = codeReviewPreviews[snippetId];
+                    return (
+                      <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                        <div
+                          className="chat-bubble bg-base-100 dark:bg-base-200 border border-purple-500 shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl relative"
+                          onClick={() => snippetId && navigate(`/code-review/${snippetId}`)}
+                          tabIndex={0}
+                          role="button"
+                          aria-label="View code review details"
+                        >
+                          {(!preview || preview.loading) ? (
+                            <div className="p-3">
+                              <Skeleton height={18} width={"70%"} className="mb-1" />
+                              <Skeleton height={12} width={"50%"} className="mb-1" />
+                              <Skeleton height={80} className="rounded mb-1" />
+                            </div>
+                          ) : preview.error ? (
+                            <div className="p-3 text-error text-sm">Failed to load code review preview.</div>
+                          ) : (
+                            <div className="flex flex-col gap-1 p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <img src={preview.data.author.photoUrl} alt="author" className="w-6 h-6 rounded-full border border-purple-500" />
+                                <span className="font-semibold text-base-content dark:text-base-content">{preview.data.author?.firstName} {preview.data.author?.lastName}</span>
+                                <span className="text-xs text-gray-400 ml-auto">{new Date(preview.data.createdAt).toLocaleDateString()}</span>
+                              </div>
+                              <div className="mb-1">
+                                <Highlight {...defaultProps} code={preview.data.code} language={preview.data.language || "javascript"} theme={document.documentElement.getAttribute('data-theme') === 'lemonade' ? duotoneLight : dracula}>
+                                  {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                                    <pre className={className + " rounded p-2 text-xs overflow-x-auto max-h-24 mb-1 bg-base-200 border border-base-300"} style={style}>
+                                      {tokens.map((line, i) => (
+                                        <div key={i} {...getLineProps({ line, key: i })}>
+                                          {line.map((token, key) => (
+                                            <span key={key} {...getTokenProps({ token, key })} />
+                                          ))}
+                                        </div>
+                                      ))}
+                                    </pre>
+                                  )}
+                                </Highlight>
+                              </div>
+                              <div className="text-base font-bold text-base-content dark:text-base-content line-clamp-2 mb-1">{preview.data.description}</div>
+                              <div className="flex gap-1 flex-wrap mb-1">
+                                {preview.data.tags && preview.data.tags.map((tag) => (
+                                  <span key={tag} className="badge badge-purple text-xs">#{tag}</span>
+                                ))}
+                                {preview.data.language && <span className="badge badge-outline text-xs">{preview.data.language}</span>}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                <span>👍 {preview.data.upvotes || 0}</span>
+                                <span>📝 {preview.data.reviews?.length || 0}</span>
+                                <span className="ml-auto">ID: {preview.data._id.slice(-6)}</span>
+                              </div>
+                              <div className="text-xs text-purple-700 dark:text-purple-300 mt-1 font-semibold">Click to view full code review & comments</div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
+                          {msg.updatedAt && new Date(msg.updatedAt).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    );
+                  }
+                  // Default message bubble
                   return (
                     <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
                       {user.firstName !== msg.firstName ? (
@@ -355,64 +510,15 @@ const Chat = () => {
                       ) : (
                         <div className="chat-header text-xs font-semibold opacity-80 mb-1">You</div>
                       )}
-                      {blogLink ? (
-                        (() => {
-                          const blogId = extractBlogId(blogLink);
-                          const preview = blogPreviews[blogId];
-                          return (
-                            <div
-                              className="chat-bubble bg-base-100 dark:bg-base-200 border border-primary shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl"
-                              onClick={() => handleBlogCardClick(blogId)}
-                              tabIndex={0}
-                              role="button"
-                              aria-label="View blog details"
-                            >
-                              {(!preview || preview.loading) ? (
-                                <div className="p-3">
-                                  <Skeleton height={18} width={"70%"} className="mb-1" />
-                                  <Skeleton height={12} width={"50%"} className="mb-1" />
-                                  <Skeleton height={80} className="rounded mb-1" />
-                                </div>
-                              ) : preview.error ? (
-                                <div className="p-3 text-error text-sm">Failed to load blog preview.</div>
-                              ) : (
-                                <div className="flex flex-col gap-1 p-3">
-                                  <div className="font-semibold text-base-content dark:text-base-content mb-1 flex items-center gap-2">
-                                    <img src={preview.data.author.photoUrl} alt="author" className="w-6 h-6 rounded-full border border-primary" />
-                                    {preview.data.author.firstName} {preview.data.author.lastName}
-                                  </div>
-                                  {preview.data.featuredImage && (
-                                    <img src={preview.data.featuredImage} alt={preview.data.title} className="w-full h-16 object-cover rounded mb-1" />
-                                  )}
-                                  <div className="text-base font-bold text-base-content dark:text-base-content line-clamp-2 mb-1">{preview.data.title}</div>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-1">{preview.data.content.slice(0, 60)}...</div>
-                                  <div className="flex gap-1 flex-wrap mb-1">
-                                    {preview.data.tags.map((tag) => (
-                                      <span key={tag} className="badge badge-primary text-xs">#{tag}</span>
-                                    ))}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                    <span>👍 {preview.data.likeCount || 0}</span>
-                                    <span>💬 {preview.data.commentCount || 0}</span>
-                                    <span>🔗 {preview.data.shareCount || 0} {shareLoadingBlogId === blogId && <span className="loading loading-spinner loading-xs ml-1"></span>}</span>
-                                    <span className="ml-auto">⏱ {preview.data.readTime} min</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()
-                      ) : (
-                        <div
-                          className={`chat-bubble px-4 py-2 max-w-xs md:max-w-sm transition-all duration-200 hover:scale-[1.01] rounded-xl shadow border
-                            ${user.firstName === msg.firstName
-                              ? 'bg-primary text-primary-content border-primary'
-                              : 'bg-base-200 dark:bg-base-100 text-base-content dark:text-base-content border-base-300 dark:border-base-200'}
-                          `}
-                        >
-                          {msg.text}
-                        </div>
-                      )}
+                      <div
+                        className={`chat-bubble px-4 py-2 max-w-xs md:max-w-sm transition-all duration-200 hover:scale-[1.01] rounded-xl shadow border
+                          ${user.firstName === msg.firstName
+                            ? 'bg-primary text-primary-content border-primary'
+                            : 'bg-base-200 dark:bg-base-100 text-base-content dark:text-base-content border-base-300 dark:border-base-200'}
+                        `}
+                      >
+                        {msg.text}
+                      </div>
                       <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
                         {msg.updatedAt && new Date(msg.updatedAt).toLocaleTimeString()}
                       </div>

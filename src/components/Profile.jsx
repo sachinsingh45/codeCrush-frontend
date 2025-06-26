@@ -5,7 +5,7 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useNavigate } from "react-router-dom";
 import Spinner from "./Spinner";
-import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt, FaEdit, FaFolderOpen, FaLinkedin, FaGithub } from "react-icons/fa";
+import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt, FaEdit, FaFolderOpen, FaLinkedin, FaGithub, FaPaperPlane } from "react-icons/fa";
 import UserCard from "./UserCard";
 
 const statIcons = [
@@ -27,6 +27,7 @@ const Profile = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [blogFilter, setBlogFilter] = useState("all"); // 'all', 'published', 'draft'
   const [showDraftsDialog, setShowDraftsDialog] = useState(false);
+  const [reviewStats, setReviewStats] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,12 +36,14 @@ const Profile = () => {
       setLoading(true);
       setError("");
       try {
-        const [statsRes, blogsRes] = await Promise.all([
+        const [statsRes, blogsRes, reviewStatsRes] = await Promise.all([
           axios.get(`${BASE_URL}/users/${user._id}/blog-stats`),
-          axios.get(`${BASE_URL}/users/${user._id}/blogs?status=all`)
+          axios.get(`${BASE_URL}/users/${user._id}/blogs?status=all`),
+          axios.get(`/user/review-stats/${user._id}`)
         ]);
         setStats(statsRes.data.data);
         setBlogs(blogsRes.data.data);
+        setReviewStats(reviewStatsRes.data);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load profile data");
       } finally {
@@ -58,36 +61,36 @@ const Profile = () => {
   const safeBlogs = Array.isArray(blogs) ? blogs : [];
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-2 sm:px-4 relative">
+    <div className="max-w-4xl mx-auto py-4 sm:py-6 px-2 sm:px-4 relative">
       {showEdit ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowEdit(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-0" onClick={() => setShowEdit(false)}>
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
           <div
-            className="bg-white dark:bg-base-200 rounded-2xl shadow-2xl px-4 py-4 w-full max-w-md max-h-[80vh] overflow-y-auto relative border border-blue-100 animate-fade-in z-10"
+            className="bg-white dark:bg-base-200 rounded-2xl shadow-2xl px-2 sm:px-4 py-4 w-full max-w-md max-h-[80vh] overflow-y-auto relative border border-blue-100 animate-fade-in z-10"
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-2xl font-bold text-center mb-3">Edit Profile</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-center mb-3">Edit Profile</h2>
             <EditProfile user={user} onClose={() => setShowEdit(false)} showToast />
           </div>
         </div>
       ) : (
         <>
           {/* Profile Card */}
-          <div className="mb-16">
-            <div className="h-32 sm:h-40 md:h-48 w-full rounded-2xl bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 shadow-lg flex items-end justify-center">
+          <div className="mb-12 sm:mb-16">
+            <div className="h-28 sm:h-40 md:h-48 w-full rounded-2xl bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 shadow-lg flex items-end justify-center">
               <img
                 src={user.photoUrl || "/default-avatar.png"}
                 alt={user.firstName}
-                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-xl bg-white -mb-14"
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-xl bg-white -mb-12 sm:-mb-14"
                 style={{ zIndex: 2 }}
               />
             </div>
-            <div className="flex flex-col items-center w-full mt-16 relative">
-              <div className="bg-base-100 dark:bg-base-200 rounded-xl shadow-lg px-6 py-5 mt-4 w-full max-w-xl flex flex-col items-center animate-fade-in border border-blue-50">
-                <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 text-center text-base-content">
+            <div className="flex flex-col items-center w-full mt-12 sm:mt-16 relative">
+              <div className="bg-base-100 dark:bg-base-200 rounded-xl shadow-lg px-3 sm:px-6 py-4 sm:py-5 mt-4 w-full max-w-xs sm:max-w-xl flex flex-col items-center animate-fade-in border border-blue-50">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center gap-2 text-center text-base-content">
                   <FaUser className="text-blue-500" /> {user.firstName} {user.lastName}
                 </h1>
-                <div className="flex flex-wrap gap-4 justify-center text-base-content text-sm mb-2">
+                <div className="flex flex-wrap gap-4 justify-center text-base-content text-xs sm:text-sm mb-2">
                   {user.age && (
                     <span className="flex items-center gap-1"><FaBirthdayCake /> {user.age} yrs</span>
                   )}
@@ -95,9 +98,9 @@ const Profile = () => {
                     <span className="flex items-center gap-1"><FaVenusMars /> {user.gender}</span>
                   )}
                 </div>
-                <p className="text-base-content text-center mb-3 max-w-xs xs:max-w-sm sm:max-w-lg text-base">{user.about || <span className="italic text-gray-400">No details available.</span>}</p>
+                <p className="text-base-content text-center mb-3 max-w-xs xs:max-w-sm sm:max-w-lg text-sm sm:text-base">{user.about || <span className="italic text-gray-400">No details available.</span>}</p>
                 {(user.linkedin || user.github) && (
-                  <div className="flex gap-4 mt-2">
+                  <div className="flex gap-4 mt-2 flex-wrap justify-center">
                     {user.linkedin && (
                       <a
                         href={user.linkedin}
@@ -127,7 +130,7 @@ const Profile = () => {
                 {user.skills && user.skills.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2 justify-center">
                     {user.skills.map((skill, idx) => (
-                      <span key={idx} className="bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-xs font-semibold shadow hover:bg-blue-200 transition cursor-pointer flex items-center gap-1">
+                      <span key={idx} className="bg-blue-100 text-blue-700 px-3 sm:px-4 py-1 rounded-full text-xs font-semibold shadow hover:bg-blue-200 transition cursor-pointer flex items-center gap-1">
                         <FaCheckCircle className="text-blue-400" /> {skill}
                       </span>
                     ))}
@@ -138,32 +141,32 @@ const Profile = () => {
           </div>
 
           {/* Buttons below the card */}
-          <div className="flex justify-center gap-4 mt-6">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 sm:mt-6 w-full items-center">
             <button
-              className="bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600 transition flex items-center gap-2 cursor-pointer"
+              className="bg-blue-500 text-white rounded-full px-4 py-2 sm:px-5 sm:py-2 shadow hover:bg-blue-600 transition flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center text-sm sm:text-base min-w-[120px] sm:min-w-[140px]"
               onClick={() => setShowEdit(true)}
               title="Edit Profile"
               aria-label="Edit Profile"
             >
-              <FaEdit size={20} />
-              <span className="hidden sm:inline font-semibold">Edit Profile</span>
+              <FaEdit size={16} />
+              <span className="font-semibold">Edit Profile</span>
             </button>
             <button
-              className="bg-gray-200 text-blue-600 rounded-full p-3 shadow-lg hover:bg-blue-100 transition flex items-center gap-2 cursor-pointer"
+              className="bg-gray-200 text-blue-600 rounded-full px-4 py-2 sm:px-5 sm:py-2 shadow hover:bg-blue-100 transition flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center text-sm sm:text-base min-w-[120px] sm:min-w-[140px]"
               onClick={() => setShowPreview(true)}
               title="Preview Profile"
               aria-label="Preview Profile"
             >
-              <FaUser size={20} />
-              <span className="hidden sm:inline font-semibold">Preview</span>
+              <FaUser size={16} />
+              <span className="font-semibold">Preview</span>
             </button>
           </div>
 
-          {/* Blog Stats Section */}
-          <div className="mt-10">
-            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><FaBlog className="text-blue-500" /> Blog Stats</h2>
+          {/* Blog Stats Section (now below Review Stats) */}
+          <div className="mt-8 sm:mt-10">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 flex items-center gap-2"><FaBlog className="text-blue-500" /> Blog Stats</h2>
             {stats ? (
-              <div className="grid grid-cols-2 xs:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-2 xs:grid-cols-3 gap-4 sm:gap-6 mb-8">
                 {[
                   { label: "Total Blogs", value: stats.totalBlogs, filter: "all" },
                   { label: "Total Likes", value: stats.totalLikes },
@@ -174,12 +177,12 @@ const Profile = () => {
                 ].map((stat, idx) => (
                   <div
                     key={stat.label}
-                    className={`bg-white dark:bg-base-200 rounded-xl p-5 text-center shadow-md hover:shadow-xl transition-all group border border-blue-50 flex flex-col items-center ${stat.filter ? 'cursor-pointer' : ''} ${stat.filter && blogFilter === stat.filter ? 'ring-2 ring-blue-400' : ''}`}
+                    className={`bg-white dark:bg-base-200 rounded-xl p-3 sm:p-5 text-center shadow-md hover:shadow-xl transition-all group border border-blue-50 flex flex-col items-center ${stat.filter ? 'cursor-pointer' : ''} ${stat.filter && blogFilter === stat.filter ? 'ring-2 ring-blue-400' : ''}`}
                     onClick={stat.filter ? () => setBlogFilter(stat.filter) : undefined}
                   >
                     <div className="mb-2 flex justify-center">{statIcons[idx]}</div>
-                    <div className="text-2xl font-bold group-hover:text-blue-600 transition">{stat.value}</div>
-                    <div className="text-gray-700 text-sm mt-1">{stat.label}</div>
+                    <div className="text-lg sm:text-2xl font-bold group-hover:text-blue-600 transition">{stat.value}</div>
+                    <div className="text-gray-700 text-xs sm:text-sm mt-1">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -188,7 +191,7 @@ const Profile = () => {
             )}
           </div>
           <button
-            className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-semibold shadow hover:bg-blue-200 transition mb-4"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-100 text-blue-700 rounded-full font-semibold shadow hover:bg-blue-200 transition mb-4 text-xs sm:text-base"
             style={{ marginBottom: '1.5rem' }}
             onClick={() => setShowDraftsDialog(true)}
           >
@@ -204,7 +207,7 @@ const Profile = () => {
                   onClick={() => setShowPreview(false)}
                   aria-label="Close Preview"
                 >✕</button>
-                <div className="mb-4 text-center text-lg font-semibold text-gray-700 dark:text-gray-200">This is how your profile appears to others:</div>
+                <div className="mb-4 text-center text-lg font-semibold text-secondary-content">This is how your profile appears to others:</div>
                 <UserCard user={user} />
               </div>
             </div>
