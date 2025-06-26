@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import MarkdownWithHighlight from "./MarkdownWithHighlight";
 
 const CodeReviewPage = () => {
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const [snippets, setSnippets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -196,12 +196,12 @@ const CodeReviewPage = () => {
   }, [error]);
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-4">
+    <div className="max-w-7xl mx-auto py-6 px-2 sm:px-4 lg:px-6">
       <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold text-base-content">Code Review</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-base-content">Code Review</h1>
         {user && (
           <button
-            className="btn btn-primary"
+            className="btn btn-primary btn-sm sm:btn-md"
             onClick={() => setShowForm((v) => !v)}
           >
             {showForm ? "Cancel" : "Submit Snippet"}
@@ -210,7 +210,7 @@ const CodeReviewPage = () => {
       </div>
       {/* Modern control bar for sort and filter */}
       {!showForm && (
-        <div className="card bg-base-100/80 dark:bg-base-200/80 border border-base-200 dark:border-base-300 shadow-lg mb-6 px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="card bg-base-100/80 dark:bg-base-200/80 border border-base-200 dark:border-base-300 shadow-lg mb-6 px-3 sm:px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex gap-2 flex-wrap items-center">
             <span className="font-semibold text-base-content mr-2">Sort:</span>
             <button
@@ -274,7 +274,7 @@ const CodeReviewPage = () => {
       {showForm && (
         <form
           onSubmit={handleSubmitSnippet}
-          className="mb-8 card bg-base-100 p-6 shadow-xl border border-base-200 rounded-2xl"
+          className="mb-8 card bg-base-100 p-4 sm:p-6 shadow-xl border border-base-200 rounded-2xl"
         >
           <textarea
             className="textarea textarea-bordered w-full mb-3"
@@ -337,11 +337,11 @@ const CodeReviewPage = () => {
           No code reviews found for this filter.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {filteredSnippets.map((snippet) => (
             <div
               key={snippet._id}
-              className="card bg-base-100 shadow-xl border border-base-200 rounded-2xl p-4 cursor-pointer hover:scale-[1.03] hover:shadow-2xl transition-all"
+              className="card bg-base-100 shadow-xl border border-base-200 rounded-2xl p-3 sm:p-4 cursor-pointer hover:scale-[1.02] hover:shadow-2xl transition-all"
               onClick={() => navigate(`/code-review/${snippet._id}`)}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -351,43 +351,62 @@ const CodeReviewPage = () => {
                   </span>
                 )}
               </div>
-              <Highlight
-                {...defaultProps}
-                code={snippet.code}
-                language={snippet.language || "javascript"}
-                theme={theme === "lemonade" ? duotoneLight : dracula}
-              >
-                {({
-                  className,
-                  style,
-                  tokens,
-                  getLineProps,
-                  getTokenProps,
-                }) => (
-                  <pre
-                    className={
-                      className +
-                      " rounded p-2 text-xs overflow-x-auto max-h-32 mb-2 bg-base-200 border border-base-300"
-                    }
-                    style={style}
-                  >
-                    {tokens.map((line, i) => {
-                      const { key, ...rest } = getLineProps({ line, key: i });
-                      return (
-                        <div key={key} {...rest}>
-                          {line.map((token, key) => {
-                            const { key: spanKey, ...spanProps } =
-                              getTokenProps({ token, key });
-                            return <span key={spanKey} {...spanProps} />;
-                          })}
-                        </div>
-                      );
-                    })}
-                  </pre>
-                )}
-              </Highlight>
+              <div className="w-full">
+                <Highlight
+                  {...defaultProps}
+                  code={snippet.code}
+                  language={snippet.language || "javascript"}
+                  theme={theme === "lemonade" ? duotoneLight : dracula}
+                >
+                  {({
+                    className,
+                    style,
+                    tokens,
+                    getLineProps,
+                    getTokenProps,
+                  }) => (
+                    <pre
+                      className={
+                        className +
+                        " rounded p-2 text-xs overflow-x-auto max-h-32 mb-2 bg-base-200 border border-base-300 w-full"
+                      }
+                      style={{
+                        ...style,
+                        minWidth: '100%',
+                        maxWidth: '100%',
+                        wordBreak: 'break-all',
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'break-word'
+                      }}
+                    >
+                      {tokens.map((line, i) => {
+                        const { key, ...rest } = getLineProps({ line, key: i });
+                        return (
+                          <div key={key} {...rest} className="whitespace-pre-wrap break-words overflow-wrap-break-word">
+                            {line.map((token, key) => {
+                              const { key: spanKey, ...spanProps } =
+                                getTokenProps({ token, key });
+                              return (
+                                <span 
+                                  key={spanKey} 
+                                  {...spanProps} 
+                                  className="break-all"
+                                  style={{
+                                    wordBreak: 'break-all',
+                                    overflowWrap: 'break-word'
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </pre>
+                  )}
+                </Highlight>
+              </div>
               {snippet.tags && snippet.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex flex-wrap gap-1 sm:gap-2 mb-2">
                   {snippet.tags.map((tag, idx) => (
                     <span key={idx} className="badge badge-primary text-xs">
                       #{tag}
@@ -396,15 +415,15 @@ const CodeReviewPage = () => {
                 </div>
               )}
 
-              <div className="text-base-content font-semibold mb-1">
+              <div className="text-base-content font-semibold mb-1 text-sm">
                 {snippet.description}
               </div>
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {snippet.author?.photoUrl && (
                   <img
                     src={snippet.author.photoUrl}
                     alt={snippet.author.firstName}
-                    className="w-8 h-8 rounded-full cursor-pointer border-2 border-primary"
+                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full cursor-pointer border-2 border-primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/users/${snippet.author._id}`);
@@ -424,7 +443,7 @@ const CodeReviewPage = () => {
                   {new Date(snippet.createdAt).toLocaleString()}
                 </span>
               </div>
-              <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
                 <span className="text-xs text-secondary font-bold">
                   Upvotes: {snippet.upvotes || 0}
                 </span>

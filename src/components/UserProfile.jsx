@@ -20,7 +20,7 @@ const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const connections = useSelector((store) => store.connections) || [];
-  const loggedInUser = useSelector((store) => store.user);
+  const loggedInUser = useSelector((store) => store.user.user);
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [blogs, setBlogs] = useState([]);

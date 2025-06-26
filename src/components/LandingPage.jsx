@@ -53,7 +53,7 @@ const testimonials = [
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const [testimonialIdx, setTestimonialIdx] = React.useState(0);
 
   React.useEffect(() => {

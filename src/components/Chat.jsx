@@ -25,7 +25,7 @@ const Chat = () => {
   const [search, setSearch] = useState("");
   const [codeReviewPreviews, setCodeReviewPreviews] = useState({});
 
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const connections = useSelector((store) => store.connections);
   const dispatch = useDispatch();
   const navigate = useNavigate();

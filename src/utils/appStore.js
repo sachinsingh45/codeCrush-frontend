@@ -11,6 +11,13 @@ const appStore = configureStore({
     connections: connectionReducer,
     requests: requestReducer,
   },
+  devTools: process.env.NODE_ENV !== 'production',
+});
+
+// Debug logging for store state changes
+appStore.subscribe(() => {
+  const state = appStore.getState();
+  console.log('Redux state changed:', state);
 });
 
 export default appStore;

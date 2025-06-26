@@ -11,7 +11,7 @@ const DiscoverUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const loggedInUser = useSelector((store) => store.user);
+  const loggedInUser = useSelector((store) => store.user.user);
 
   useEffect(() => {
     const fetchData = async () => {

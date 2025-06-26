@@ -21,7 +21,7 @@ import MarkdownWithHighlight from "./MarkdownWithHighlight";
 const CodeReviewDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const [snippet, setSnippet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

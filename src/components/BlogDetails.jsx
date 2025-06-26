@@ -13,7 +13,7 @@ import { addConnections } from "../utils/conectionSlice";
 const BlogDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const dispatch = useDispatch();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);

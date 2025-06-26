@@ -18,7 +18,7 @@ const BlogPage = () => {
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("desc"); // 'desc' for newest first, 'asc' for oldest first
   const navigate = useNavigate();
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const connections = useSelector((store) => store.connections) || [];
   const dispatch = useDispatch();
   const [fetchingConnections, setFetchingConnections] = useState(false);

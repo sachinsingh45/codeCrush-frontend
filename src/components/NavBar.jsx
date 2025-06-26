@@ -7,7 +7,7 @@ import { useEffect, useState, useRef } from "react";
 import { FaUser, FaComments, FaUserFriends, FaUserPlus, FaSun, FaMoon, FaSearch, FaBars, FaSignOutAlt, FaHome } from "react-icons/fa";
 
 const NavBar = () => {
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();

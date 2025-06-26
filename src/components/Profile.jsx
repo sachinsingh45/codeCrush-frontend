@@ -18,7 +18,7 @@ const statIcons = [
 ];
 
 const Profile = () => {
-  const user = useSelector((store) => store.user);
+  const user = useSelector((store) => store.user.user);
   const [stats, setStats] = useState(null);
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,14 +36,22 @@ const Profile = () => {
       setLoading(true);
       setError("");
       try {
-        const [statsRes, blogsRes, reviewStatsRes] = await Promise.all([
+        // Fetch blog stats and blogs
+        const [statsRes, blogsRes] = await Promise.all([
           axios.get(`${BASE_URL}/users/${user._id}/blog-stats`),
-          axios.get(`${BASE_URL}/users/${user._id}/blogs?status=all`),
-          axios.get(`/user/review-stats/${user._id}`)
+          axios.get(`${BASE_URL}/users/${user._id}/blogs?status=all`)
         ]);
         setStats(statsRes.data.data);
         setBlogs(blogsRes.data.data);
-        setReviewStats(reviewStatsRes.data);
+        
+        // Try to fetch review stats separately (optional)
+        try {
+          const reviewStatsRes = await axios.get(`${BASE_URL}/review-stats/${user._id}`);
+          setReviewStats(reviewStatsRes.data);
+        } catch (reviewErr) {
+          console.warn("Review stats not available:", reviewErr.message);
+          setReviewStats(null);
+        }
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load profile data");
       } finally {
