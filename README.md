@@ -193,9 +193,7 @@ npm install
 PORT=7777
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-AWS_REGION=your_aws_region
+COHERE_AI_KEY=your_cohere_secret
 
 # Start the backend server
 npm run dev
@@ -282,15 +280,12 @@ VITE_API_BASE_URL=http://localhost:7777
 ## Contributing 🤝
 We welcome contributions! Feel free to fork the repository and submit a pull request.
 
-## License 📜
-This project is licensed under the **MIT License**.
-
 ---
 ## 🧑‍💻 Contributors
 - Sachin Singh - [GitHub](https://github.com/sachinsingh45)
 
 ---
 
-🚀 Built with ❤️ by **Sachin Singh & Team**
+🚀 Built with ❤️ by **Sachin Singh**
 
 
