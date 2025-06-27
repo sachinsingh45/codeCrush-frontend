@@ -69,7 +69,7 @@ const Chat = () => {
         firstName: msg.senderId?.firstName,
         lastName: msg.senderId?.lastName,
         text: msg.text,
-        updatedAt: msg.updatedAt,  // Include updatedAt timestamp
+        createdAt: msg.createdAt,
       }));
       setMessages(chatMessages);
     } catch (err) {
@@ -97,7 +97,7 @@ const Chat = () => {
       targetUserId: selectedUserId,
     });
 
-    socket.on("messageReceived", ({ firstName, lastName, text, updatedAt }) => {
+    socket.on("messageReceived", ({ firstName, lastName, text, createdAt }) => {
       setMessages((prev) => {
         // Remove the first pending message that matches text and user
         const idx = prev.findIndex(
@@ -105,10 +105,10 @@ const Chat = () => {
         );
         if (idx !== -1) {
           const newMsgs = [...prev];
-          newMsgs[idx] = { firstName, lastName, text, updatedAt };
+          newMsgs[idx] = { firstName, lastName, text, createdAt };
           return newMsgs;
         }
-        return [...prev, { firstName, lastName, text, updatedAt }];
+        return [...prev, { firstName, lastName, text, createdAt }];
       });
     });
 
@@ -143,7 +143,7 @@ const Chat = () => {
       firstName: user.firstName,
       lastName: user.lastName,
       text: newMessage,
-      updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       _tempId: tempId,
       pending: true,
     };
@@ -302,12 +302,15 @@ const Chat = () => {
     }
   }, [paramTargetUserId]);
 
-  // Helper to get WhatsApp-style date label
-  const getDateLabel = (date) => {
+  // WhatsApp-style date separator
+  const getDateSeparatorLabel = (date) => {
     if (isToday(date)) return "Today";
     if (isYesterday(date)) return "Yesterday";
-    return format(date, "dd/MM/yyyy");
+    return format(date, "d MMM yyyy");
   };
+
+  // WhatsApp-style time under message
+  const getTimeLabel = (date) => format(date, "p");
 
   const [onlineUsers, setOnlineUsers] = useState({});
   const [unseenCounts, setUnseenCounts] = useState({});
@@ -485,9 +488,9 @@ const Chat = () => {
                 (() => {
                   let lastDate = null;
                   return messages.reduce((elements, msg, index) => {
-                    const msgDate = msg.updatedAt ? new Date(msg.updatedAt) : new Date();
+                    const msgDate = msg.createdAt ? new Date(msg.createdAt) : new Date();
                     let showDateSeparator = false;
-                    if (msgDate && (!lastDate || !isSameDay(msgDate, lastDate))) {
+                    if (!lastDate || !isSameDay(msgDate, lastDate)) {
                       showDateSeparator = true;
                       lastDate = msgDate;
                     }
@@ -502,7 +505,7 @@ const Chat = () => {
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
                               <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
-                                {getDateLabel(msgDate)}
+                                {getDateSeparatorLabel(msgDate)}
                               </span>
                             </div>
                           )}
@@ -548,7 +551,7 @@ const Chat = () => {
                               )}
                             </div>
                             <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
-                              {formatWhatsAppDate(msg.updatedAt)}
+                              {getTimeLabel(msgDate)}
                             </div>
                           </div>
                         </>
@@ -564,7 +567,7 @@ const Chat = () => {
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
                               <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
-                                {getDateLabel(msgDate)}
+                                {getDateSeparatorLabel(msgDate)}
                               </span>
                             </div>
                           )}
@@ -623,7 +626,7 @@ const Chat = () => {
                               )}
                             </div>
                             <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
-                              {formatWhatsAppDate(msg.updatedAt)}
+                              {getTimeLabel(msgDate)}
                             </div>
                           </div>
                         </>
@@ -637,7 +640,7 @@ const Chat = () => {
                         {showDateSeparator && (
                           <div className="flex justify-center my-2">
                             <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
-                              {getDateLabel(msgDate)}
+                              {getDateSeparatorLabel(msgDate)}
                             </span>
                           </div>
                         )}
@@ -665,7 +668,7 @@ const Chat = () => {
                             )}
                           </div>
                           <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
-                            {formatWhatsAppDate(msg.updatedAt)}
+                            {getTimeLabel(msgDate)}
                           </div>
                         </div>
                       </>
