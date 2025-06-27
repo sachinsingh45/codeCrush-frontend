@@ -72,7 +72,7 @@ CodeCrush is a platform where coders and developers can **connect and communicat
 <img src="https://github.com/user-attachments/assets/e235840a-82b9-4566-b31a-67f7f2324cc3" width="600"/>
 
 ### Chat Interface:
-<img src="https://github.com/user-attachments/assets/24018b3c-974b-4c9e-bb2d-d00f6b58a885" width="600"/>
+<img src="https://github.com/user-attachments/assets/1fd6caec-88c4-4029-a677-f9c77bcd09ed" width="600"/>
 
 ### User Profile:
 <img src="https://github.com/user-attachments/assets/67b28908-4079-43a0-a4ea-b84c6d093f5f" width="600"/>
