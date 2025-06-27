@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { addConnections } from "../utils/conectionSlice";
-import { FaBars, FaExternalLinkAlt } from "react-icons/fa";
+import { FaBars, FaExternalLinkAlt, FaSpinner } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { FaRegSadTear, FaCommentSlash } from "react-icons/fa"; 
 import Skeleton from "react-loading-skeleton";
@@ -14,6 +14,7 @@ import Footer from "./Footer";
 import Highlight, { defaultProps } from "prism-react-renderer";
 import dracula from "prism-react-renderer/themes/dracula";
 import duotoneLight from "prism-react-renderer/themes/duotoneLight";
+import { format, isToday, isYesterday, isSameDay } from "date-fns";
 
 const Chat = () => {
   const { targetUserId: paramTargetUserId } = useParams();
@@ -97,7 +98,18 @@ const Chat = () => {
     });
 
     socket.on("messageReceived", ({ firstName, lastName, text, updatedAt }) => {
-      setMessages((prev) => [...prev, { firstName, lastName, text, updatedAt }]);
+      setMessages((prev) => {
+        // Remove the first pending message that matches text and user
+        const idx = prev.findIndex(
+          (msg) => msg.pending && msg.text === text && msg.firstName === firstName
+        );
+        if (idx !== -1) {
+          const newMsgs = [...prev];
+          newMsgs[idx] = { firstName, lastName, text, updatedAt };
+          return newMsgs;
+        }
+        return [...prev, { firstName, lastName, text, updatedAt }];
+      });
     });
 
     return () => {
@@ -105,8 +117,38 @@ const Chat = () => {
     };
   }, [userId, selectedUserId]);
 
+  const [pendingMessages, setPendingMessages] = useState([]);
+
+  const formatWhatsAppDate = (dateString) => {
+    let date;
+    try {
+      date = dateString ? new Date(dateString) : new Date();
+      if (isNaN(date.getTime())) throw new Error('Invalid date');
+    } catch {
+      date = new Date();
+    }
+    if (isToday(date)) {
+      return format(date, "p"); // 2:45 PM
+    } else if (isYesterday(date)) {
+      return `Yesterday, ${format(date, "p")}`;
+    } else {
+      return format(date, "dd/MM/yyyy, p");
+    }
+  };
+
   const sendMessage = () => {
     if (!newMessage.trim()) return;
+    const tempId = Date.now() + Math.random();
+    const pendingMsg = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      text: newMessage,
+      updatedAt: new Date().toISOString(),
+      _tempId: tempId,
+      pending: true,
+    };
+    setMessages((prev) => [...prev, pendingMsg]);
+    setPendingMessages((prev) => [...prev, tempId]);
     const socket = createSocketConnection();
     socket.emit("sendMessage", {
       firstName: user.firstName,
@@ -260,6 +302,13 @@ const Chat = () => {
     }
   }, [paramTargetUserId]);
 
+  // Helper to get WhatsApp-style date label
+  const getDateLabel = (date) => {
+    if (isToday(date)) return "Today";
+    if (isYesterday(date)) return "Yesterday";
+    return format(date, "dd/MM/yyyy");
+  };
+
   return (
     <form onSubmit={e => { e.preventDefault(); sendMessage(); }}>
       <div className="w-full h-[88vh] flex bg-base-200/80 dark:bg-base-200/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md" style={{ minHeight: '88vh', maxHeight: '88vh', overflow: 'hidden' }}>
@@ -380,151 +429,194 @@ const Chat = () => {
             )}
             <div className="flex-1 overflow-y-auto flex flex-col gap-3 p-2 md:p-4 custom-scrollbar bg-base-100/80 dark:bg-base-200/80" style={{ minHeight: 0 }}>
               {messages.length > 0 ? (
-                messages.map((msg, index) => {
-                  const blogLink = parseBlogLink(msg.text);
-                  const codeReviewLink = parseCodeReviewLink(msg.text);
-                  // Blog preview
-                  if (blogLink) {
-                    const blogId = extractBlogId(blogLink);
-                    const preview = blogPreviews[blogId];
-                    return (
-                      <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
-                        <div
-                          className="chat-bubble bg-base-100 dark:bg-base-200 border border-primary shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl"
-                          onClick={() => handleBlogCardClick(blogId)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label="View blog details"
-                        >
-                          {(!preview || preview.loading) ? (
-                            <div className="p-3">
-                              <Skeleton height={18} width={"70%"} className="mb-1" />
-                              <Skeleton height={12} width={"50%"} className="mb-1" />
-                              <Skeleton height={80} className="rounded mb-1" />
-                            </div>
-                          ) : preview.error ? (
-                            <div className="p-3 text-error text-sm">Failed to load blog preview.</div>
-                          ) : (
-                            <div className="flex flex-col gap-1 p-3">
-                              <div className="font-semibold text-base-content dark:text-base-content mb-1 flex items-center gap-2">
-                                <img src={preview.data.author.photoUrl} alt="author" className="w-6 h-6 rounded-full border border-primary" />
-                                {preview.data.author.firstName} {preview.data.author.lastName}
-                              </div>
-                              {preview.data.featuredImage && (
-                                <img src={preview.data.featuredImage} alt={preview.data.title} className="w-full h-16 object-cover rounded mb-1" />
-                              )}
-                              <div className="text-base font-bold text-base-content dark:text-base-content line-clamp-2 mb-1">{preview.data.title}</div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-1">{preview.data.content.slice(0, 60)}...</div>
-                              <div className="flex gap-1 flex-wrap mb-1">
-                                {preview.data.tags.map((tag) => (
-                                  <span key={tag} className="badge badge-primary text-xs">#{tag}</span>
-                                ))}
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <span>👍 {preview.data.likeCount || 0}</span>
-                                <span>💬 {preview.data.commentCount || 0}</span>
-                                <span>🔗 {preview.data.shareCount || 0} {shareLoadingBlogId === blogId && <span className="loading loading-spinner loading-xs ml-1"></span>}</span>
-                                <span className="ml-auto">⏱ {preview.data.readTime} min</span>
-                              </div>
+                (() => {
+                  let lastDate = null;
+                  return messages.map((msg, index) => {
+                    const msgDate = msg.updatedAt ? new Date(msg.updatedAt) : new Date();
+                    let showDateSeparator = false;
+                    if (msgDate && (!lastDate || !isSameDay(msgDate, lastDate))) {
+                      showDateSeparator = true;
+                      lastDate = msgDate;
+                    }
+                    const blogLink = parseBlogLink(msg.text);
+                    const codeReviewLink = parseCodeReviewLink(msg.text);
+                    // Blog preview
+                    if (blogLink) {
+                      const blogId = extractBlogId(blogLink);
+                      const preview = blogPreviews[blogId];
+                      return (
+                        <>
+                          {showDateSeparator && (
+                            <div className="flex justify-center my-2">
+                              <span className="bg-base-300 text-xs text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full shadow">
+                                {getDateLabel(msgDate)}
+                              </span>
                             </div>
                           )}
-                        </div>
-                        <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
-                          {msg.updatedAt && new Date(msg.updatedAt).toLocaleTimeString()}
-                        </div>
-                      </div>
-                    );
-                  }
-                  // Code review preview
-                  if (codeReviewLink) {
-                    const snippetId = extractSnippetId(codeReviewLink);
-                    const preview = codeReviewPreviews[snippetId];
-                    return (
-                      <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
-                        <div
-                          className="chat-bubble bg-base-100 dark:bg-base-200 border border-purple-500 shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl relative"
-                          onClick={() => snippetId && navigate(`/code-review/${snippetId}`)}
-                          tabIndex={0}
-                          role="button"
-                          aria-label="View code review details"
-                        >
-                          {(!preview || preview.loading) ? (
-                            <div className="p-3">
-                              <Skeleton height={18} width={"70%"} className="mb-1" />
-                              <Skeleton height={12} width={"50%"} className="mb-1" />
-                              <Skeleton height={80} className="rounded mb-1" />
-                            </div>
-                          ) : preview.error ? (
-                            <div className="p-3 text-error text-sm">Failed to load code review preview.</div>
-                          ) : (
-                            <div className="flex flex-col gap-1 p-3">
-                              <div className="flex items-center gap-2 mb-1">
-                                <img src={preview.data.author.photoUrl} alt="author" className="w-6 h-6 rounded-full border border-purple-500" />
-                                <span className="font-semibold text-base-content dark:text-base-content">{preview.data.author?.firstName} {preview.data.author?.lastName}</span>
-                                <span className="text-xs text-gray-400 ml-auto">{new Date(preview.data.createdAt).toLocaleDateString()}</span>
-                              </div>
-                              <div className="mb-1">
-                                <Highlight {...defaultProps} code={preview.data.code} language={preview.data.language || "javascript"} theme={document.documentElement.getAttribute('data-theme') === 'lemonade' ? duotoneLight : dracula}>
-                                  {({ className, style, tokens, getLineProps, getTokenProps }) => (
-                                    <pre className={className + " rounded p-2 text-xs overflow-x-auto max-h-24 mb-1 bg-base-200 border border-base-300"} style={style}>
-                                      {tokens.map((line, i) => (
-                                        <div key={i} {...getLineProps({ line, key: i })}>
-                                          {line.map((token, key) => (
-                                            <span key={key} {...getTokenProps({ token, key })} />
-                                          ))}
-                                        </div>
-                                      ))}
-                                    </pre>
+                          <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                            <div
+                              className="chat-bubble bg-base-100 dark:bg-base-200 border border-primary shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl"
+                              onClick={() => handleBlogCardClick(blogId)}
+                              tabIndex={0}
+                              role="button"
+                              aria-label="View blog details"
+                            >
+                              {(!preview || preview.loading) ? (
+                                <div className="p-3">
+                                  <Skeleton height={18} width={"70%"} className="mb-1" />
+                                  <Skeleton height={12} width={"50%"} className="mb-1" />
+                                  <Skeleton height={80} className="rounded mb-1" />
+                                </div>
+                              ) : preview.error ? (
+                                <div className="p-3 text-error text-sm">Failed to load blog preview.</div>
+                              ) : (
+                                <div className="flex flex-col gap-1 p-3">
+                                  <div className="font-semibold text-base-content dark:text-base-content mb-1 flex items-center gap-2">
+                                    <img src={preview.data.author.photoUrl} alt="author" className="w-6 h-6 rounded-full border border-primary" />
+                                    {preview.data.author.firstName} {preview.data.author.lastName}
+                                  </div>
+                                  {preview.data.featuredImage && (
+                                    <img src={preview.data.featuredImage} alt={preview.data.title} className="w-full h-16 object-cover rounded mb-1" />
                                   )}
-                                </Highlight>
-                              </div>
-                              <div className="text-base font-bold text-base-content dark:text-base-content line-clamp-2 mb-1">{preview.data.description}</div>
-                              <div className="flex gap-1 flex-wrap mb-1">
-                                {preview.data.tags && preview.data.tags.map((tag) => (
-                                  <span key={tag} className="badge badge-purple text-xs">#{tag}</span>
-                                ))}
-                                {preview.data.language && <span className="badge badge-outline text-xs">{preview.data.language}</span>}
-                              </div>
-                              <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                <span>👍 {preview.data.upvotes || 0}</span>
-                                <span>📝 {preview.data.reviews?.length || 0}</span>
-                                <span className="ml-auto">ID: {preview.data._id.slice(-6)}</span>
-                              </div>
-                              <div className="text-xs text-purple-700 dark:text-purple-300 mt-1 font-semibold">Click to view full code review & comments</div>
+                                  <div className="text-base font-bold text-base-content dark:text-base-content line-clamp-2 mb-1">{preview.data.title}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-1">{preview.data.content.slice(0, 60)}...</div>
+                                  <div className="flex gap-1 flex-wrap mb-1">
+                                    {preview.data.tags.map((tag) => (
+                                      <span key={tag} className="badge badge-primary text-xs">#{tag}</span>
+                                    ))}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <span>👍 {preview.data.likeCount || 0}</span>
+                                    <span>💬 {preview.data.commentCount || 0}</span>
+                                    <span>🔗 {preview.data.shareCount || 0} {shareLoadingBlogId === blogId && <span className="loading loading-spinner loading-xs ml-1"></span>}</span>
+                                    <span className="ml-auto">⏱ {preview.data.readTime} min</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
+                              {formatWhatsAppDate(msg.updatedAt)}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    }
+                    // Code review preview
+                    if (codeReviewLink) {
+                      const snippetId = extractSnippetId(codeReviewLink);
+                      const preview = codeReviewPreviews[snippetId];
+                      return (
+                        <>
+                          {showDateSeparator && (
+                            <div className="flex justify-center my-2">
+                              <span className="bg-base-300 text-xs text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full shadow">
+                                {getDateLabel(msgDate)}
+                              </span>
                             </div>
                           )}
+                          <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                            <div
+                              className="chat-bubble bg-base-100 dark:bg-base-200 border border-purple-500 shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl relative"
+                              onClick={() => snippetId && navigate(`/code-review/${snippetId}`)}
+                              tabIndex={0}
+                              role="button"
+                              aria-label="View code review details"
+                            >
+                              {(!preview || preview.loading) ? (
+                                <div className="p-3">
+                                  <Skeleton height={18} width={"70%"} className="mb-1" />
+                                  <Skeleton height={12} width={"50%"} className="mb-1" />
+                                  <Skeleton height={80} className="rounded mb-1" />
+                                </div>
+                              ) : preview.error ? (
+                                <div className="p-3 text-error text-sm">Failed to load code review preview.</div>
+                              ) : (
+                                <div className="flex flex-col gap-1 p-3">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <img src={preview.data.author.photoUrl} alt="author" className="w-6 h-6 rounded-full border border-purple-500" />
+                                    <span className="font-semibold text-base-content dark:text-base-content">{preview.data.author?.firstName} {preview.data.author?.lastName}</span>
+                                    <span className="text-xs text-gray-400 ml-auto">{new Date(preview.data.createdAt).toLocaleDateString()}</span>
+                                  </div>
+                                  <div className="mb-1">
+                                    <Highlight {...defaultProps} code={preview.data.code} language={preview.data.language || "javascript"} theme={document.documentElement.getAttribute('data-theme') === 'lemonade' ? duotoneLight : dracula}>
+                                      {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                                        <pre className={className + " rounded p-2 text-xs overflow-x-auto max-h-24 mb-1 bg-base-200 border border-base-300"} style={style}>
+                                          {tokens.map((line, i) => (
+                                            <div key={i} {...getLineProps({ line, key: i })}>
+                                              {line.map((token, key) => (
+                                                <span key={key} {...getTokenProps({ token, key })} />
+                                              ))}
+                                            </div>
+                                          ))}
+                                        </pre>
+                                      )}
+                                    </Highlight>
+                                  </div>
+                                  <div className="text-base font-bold text-base-content dark:text-base-content line-clamp-2 mb-1">{preview.data.description}</div>
+                                  <div className="flex gap-1 flex-wrap mb-1">
+                                    {preview.data.tags && preview.data.tags.map((tag) => (
+                                      <span key={tag} className="badge badge-purple text-xs">#{tag}</span>
+                                    ))}
+                                    {preview.data.language && <span className="badge badge-outline text-xs">{preview.data.language}</span>}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <span>👍 {preview.data.upvotes || 0}</span>
+                                    <span>📝 {preview.data.reviews?.length || 0}</span>
+                                    <span className="ml-auto">ID: {preview.data._id.slice(-6)}</span>
+                                  </div>
+                                  <div className="text-xs text-purple-700 dark:text-purple-300 mt-1 font-semibold">Click to view full code review & comments</div>
+                                </div>
+                              )}
+                            </div>
+                            <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
+                              {formatWhatsAppDate(msg.updatedAt)}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    }
+                    // For default message bubble:
+                    const messageKey = msg._tempId ? `pending-${msg._tempId}` : `msg-${index}`;
+                    return (
+                      <>
+                        {showDateSeparator && (
+                          <div className="flex justify-center my-2">
+                            <span className="bg-base-300 text-xs text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full shadow">
+                              {getDateLabel(msgDate)}
+                            </span>
+                          </div>
+                        )}
+                        <div key={messageKey} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                          {user.firstName !== msg.firstName ? (
+                            <div className="chat-header text-xs font-semibold opacity-80 mb-1">
+                              {msg.firstName} {msg.lastName}
+                            </div>
+                          ) : (
+                            <div className="chat-header text-xs font-semibold opacity-80 mb-1">You</div>
+                          )}
+                          <div
+                            className={`chat-bubble px-4 py-2 max-w-xs md:max-w-sm transition-all duration-200 hover:scale-[1.01] rounded-xl shadow border
+                              ${user.firstName === msg.firstName
+                                ? 'bg-primary text-primary-content border-primary'
+                                : 'bg-base-200 dark:bg-base-100 text-base-content dark:text-base-content border-base-300 dark:border-base-200'}
+                              ${msg.pending ? 'opacity-60 relative' : ''}
+                            `}
+                          >
+                            {msg.text}
+                            {msg.pending && (
+                              <span className="absolute right-2 bottom-2 animate-spin text-xs text-gray-400">
+                                <FaSpinner />
+                              </span>
+                            )}
+                          </div>
+                          <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
+                            {formatWhatsAppDate(msg.updatedAt)}
+                          </div>
                         </div>
-                        <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
-                          {msg.updatedAt && new Date(msg.updatedAt).toLocaleTimeString()}
-                        </div>
-                      </div>
+                      </>
                     );
-                  }
-                  // Default message bubble
-                  return (
-                    <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
-                      {user.firstName !== msg.firstName ? (
-                        <div className="chat-header text-xs font-semibold opacity-80 mb-1">
-                          {msg.firstName} {msg.lastName}
-                        </div>
-                      ) : (
-                        <div className="chat-header text-xs font-semibold opacity-80 mb-1">You</div>
-                      )}
-                      <div
-                        className={`chat-bubble px-4 py-2 max-w-xs md:max-w-sm transition-all duration-200 hover:scale-[1.01] rounded-xl shadow border
-                          ${user.firstName === msg.firstName
-                            ? 'bg-primary text-primary-content border-primary'
-                            : 'bg-base-200 dark:bg-base-100 text-base-content dark:text-base-content border-base-300 dark:border-base-200'}
-                        `}
-                      >
-                        {msg.text}
-                      </div>
-                      <div className="chat-footer text-xs text-gray-400 dark:text-gray-500 mt-1 text-left">
-                        {msg.updatedAt && new Date(msg.updatedAt).toLocaleTimeString()}
-                      </div>
-                    </div>
-                  );
-                })
+                  });
+                })()
               ) : (
                 <div className="flex flex-col relative items-center bg-base-300 p-4 sm:p-6 rounded-lg shadow w-full text-center">
                   <FaCommentSlash className="text-4xl sm:text-5xl text-base-content mb-2" />
