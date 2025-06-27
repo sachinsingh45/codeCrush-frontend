@@ -297,8 +297,8 @@ const Chat = () => {
 
   // Sync selectedUserId with URL param
   useEffect(() => {
-    if (paramTargetUserId !== selectedUserId) {
-      setSelectedUserId(paramTargetUserId || null);
+    if (typeof paramTargetUserId !== 'undefined' && paramTargetUserId !== selectedUserId) {
+      setSelectedUserId(paramTargetUserId);
     }
   }, [paramTargetUserId]);
 
@@ -310,7 +310,7 @@ const Chat = () => {
   };
 
   return (
-    <form onSubmit={e => { e.preventDefault(); sendMessage(); }}>
+    <div>
       <div className="w-full h-[88vh] flex bg-base-200/80 dark:bg-base-200/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md" style={{ minHeight: '88vh', maxHeight: '88vh', overflow: 'hidden' }}>
         {/* Friends List (always visible on desktop, toggled on mobile) */}
         {(!isMobile || !selectedUserId) && (
@@ -630,10 +630,11 @@ const Chat = () => {
                 <input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="flex-1 border border-primary bg-base-100 dark:bg-base-200 text-base-content rounded-full px-4 py-2 shadow focus:outline-none focus:ring-2 focus:ring-primary text-base"
                   placeholder="Type a message..."
                 />
-                <button type="submit" className="btn btn-primary rounded-full px-4 py-2 shadow font-bold text-base">
+                <button type="button" onClick={sendMessage} className="btn btn-primary rounded-full px-4 py-2 shadow font-bold text-base">
                   Send
                 </button>
               </div>
@@ -641,7 +642,7 @@ const Chat = () => {
           </main>
         )}
       </div>
-    </form>
+    </div>
   );
 };
 
