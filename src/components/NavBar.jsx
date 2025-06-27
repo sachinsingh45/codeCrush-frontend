@@ -36,6 +36,7 @@ const NavBar = () => {
       navigate("/login");
     } catch (err) {
       console.error("Logout error:", err);
+      toast.error(err.message || 'An error occurred');
     }
   };
 

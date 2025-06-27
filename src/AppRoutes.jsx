@@ -20,9 +20,6 @@ import { useSelector } from "react-redux";
 function AppRoutes() {
   const { user } = useSelector((store) => store.user);
   
-  // Debug logging
-  console.log('AppRoutes render:', { user });
-  
   return (
     <BrowserRouter basename="/">
       <Routes>

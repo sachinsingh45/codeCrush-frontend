@@ -8,6 +8,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
 import { addConnections } from "../utils/conectionSlice";
 import Spinner from "./Spinner";
+import { toast } from "react-hot-toast";
 
 const BlogPage = () => {
   const [blogs, setBlogs] = useState([]);
@@ -64,6 +65,7 @@ const BlogPage = () => {
         setTotalPages(res.data.pagination?.totalPages || 1);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load blogs");
+        toast.error(err.message || 'An error occurred');
       } finally {
         setLoading(false);
       }

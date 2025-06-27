@@ -17,8 +17,6 @@ function GlobalSocketInit() {
 }
 
 function App() {
-  console.log('App component rendering');
-  
   return (
     <Provider store={appStore}>
       <GlobalSocketInit />

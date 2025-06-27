@@ -24,7 +24,7 @@ const Requests = () => {
       toast.success(res.data.message || `Request ${action}ed!`);
       fetchRequests();
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to review request.');
+      toast.error(err.message || 'An error occurred');
       console.error("Error reviewing request:", err);
     }
   };
@@ -36,6 +36,7 @@ const Requests = () => {
       });
       dispatch(addRequests(res.data.data));
     } catch (err) {
+      toast.error(err.message || 'An error occurred');
       console.error("Error fetching requests:", err);
     }
   };

@@ -217,7 +217,8 @@ const Chat = () => {
         try {
           const res = await axios.get(`${BASE_URL}/blogs/${blogId}`);
           setBlogPreviews((prev) => ({ ...prev, [blogId]: { loading: false, data: res.data.data } }));
-        } catch {
+        } catch (err) {
+          console.error("Error loading blog preview:", err);
           setBlogPreviews((prev) => ({ ...prev, [blogId]: { loading: false, error: true } }));
         }
       }
@@ -233,7 +234,8 @@ const Chat = () => {
         try {
           const res = await axios.get(`${BASE_URL}/code-review/snippet/${snippetId}`);
           setCodeReviewPreviews((prev) => ({ ...prev, [snippetId]: { loading: false, data: res.data.snippet } }));
-        } catch {
+        } catch (err) {
+          console.error("Error loading code review preview:", err);
           setCodeReviewPreviews((prev) => ({ ...prev, [snippetId]: { loading: false, error: true } }));
         }
       }
@@ -282,7 +284,9 @@ const Chat = () => {
           },
         }));
         setSharedInSession((prev) => ({ ...prev, [blogId]: true }));
-      } catch {}
+      } catch (err) {
+        console.error("Error sharing blog:", err);
+      }
       setShareLoadingBlogId(null);
     }
     navigate(`/blogs/${blogId}`);

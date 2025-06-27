@@ -6,6 +6,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import UserCard from "./UserCard";
 import Spinner from "./Spinner";
 import { useSelector } from "react-redux";
+import { toast } from "react-hot-toast";
 
 const DiscoverUsers = () => {
   const [users, setUsers] = useState([]);
@@ -22,6 +23,7 @@ const DiscoverUsers = () => {
         setUsers(res.data.data);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load users");
+        toast.error(err.message || 'An error occurred');
       } finally {
         setLoading(false);
       }
