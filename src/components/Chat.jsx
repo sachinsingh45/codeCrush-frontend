@@ -484,7 +484,7 @@ const Chat = () => {
               {messages.length > 0 ? (
                 (() => {
                   let lastDate = null;
-                  return messages.map((msg, index) => {
+                  return messages.reduce((elements, msg, index) => {
                     const msgDate = msg.updatedAt ? new Date(msg.updatedAt) : new Date();
                     let showDateSeparator = false;
                     if (msgDate && (!lastDate || !isSameDay(msgDate, lastDate))) {
@@ -497,7 +497,7 @@ const Chat = () => {
                     if (blogLink) {
                       const blogId = extractBlogId(blogLink);
                       const preview = blogPreviews[blogId];
-                      return (
+                      elements.push(
                         <>
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
@@ -553,12 +553,13 @@ const Chat = () => {
                           </div>
                         </>
                       );
+                      return elements;
                     }
                     // Code review preview
                     if (codeReviewLink) {
                       const snippetId = extractSnippetId(codeReviewLink);
                       const preview = codeReviewPreviews[snippetId];
-                      return (
+                      elements.push(
                         <>
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
@@ -627,10 +628,11 @@ const Chat = () => {
                           </div>
                         </>
                       );
+                      return elements;
                     }
                     // For default message bubble:
                     const messageKey = msg._tempId ? `pending-${msg._tempId}` : `msg-${index}`;
-                    return (
+                    elements.push(
                       <>
                         {showDateSeparator && (
                           <div className="flex justify-center my-2">
@@ -668,7 +670,8 @@ const Chat = () => {
                         </div>
                       </>
                     );
-                  });
+                    return elements;
+                  }, []);
                 })()
               ) : (
                 <div className="flex flex-col relative items-center bg-base-300 p-4 sm:p-6 rounded-lg shadow w-full text-center">
