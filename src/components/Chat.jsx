@@ -309,6 +309,44 @@ const Chat = () => {
     return format(date, "dd/MM/yyyy");
   };
 
+  const [onlineUsers, setOnlineUsers] = useState({});
+  const [unseenCounts, setUnseenCounts] = useState({});
+
+  useEffect(() => {
+    if (!userId) return;
+    const socket = createSocketConnection();
+    // Listen for online/offline events
+    socket.on("userOnline", ({ userId: onlineId }) => {
+      setOnlineUsers((prev) => ({ ...prev, [onlineId]: true }));
+    });
+    socket.on("userOffline", ({ userId: offlineId }) => {
+      setOnlineUsers((prev) => {
+        const copy = { ...prev };
+        delete copy[offlineId];
+        return copy;
+      });
+    });
+    // Listen for unseen message counts
+    socket.on("unseenCounts", (counts) => {
+      setUnseenCounts(counts || {});
+    });
+    // Listen for the full list of online users
+    socket.on("onlineUsers", (userIds) => {
+      const onlineMap = {};
+      userIds.forEach(id => { onlineMap[id] = true; });
+      setOnlineUsers(onlineMap);
+    });
+    return () => socket.disconnect();
+  }, [userId]);
+
+  // Emit markAsSeen when chat is opened
+  useEffect(() => {
+    if (!userId || !selectedUserId) return;
+    const socket = createSocketConnection();
+    socket.emit("markAsSeen", { userId, targetUserId: selectedUserId });
+    return () => socket.disconnect();
+  }, [userId, selectedUserId]);
+
   return (
     <div>
       <div className="w-full h-[88vh] flex bg-base-200/80 dark:bg-base-200/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md" style={{ minHeight: '88vh', maxHeight: '88vh', overflow: 'hidden' }}>
@@ -348,6 +386,14 @@ const Chat = () => {
                     <span className="font-semibold text-primary-content  text-lg">
                       {conn.firstName} {conn.lastName}
                     </span>
+                    {unseenCounts[conn._id] > 0 && (
+                      <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">
+                        {unseenCounts[conn._id]}
+                      </span>
+                    )}
+                    {onlineUsers[conn._id] && (
+                      <span className="ml-2 w-2 h-2 bg-green-500 rounded-full inline-block"></span>
+                    )}
                   </div>
                 ))
               ) : (
@@ -373,42 +419,49 @@ const Chat = () => {
         {(!isMobile || selectedUserId) && (
           <main className={`flex-1 flex flex-col w-full sm:w-3/4 p-0 md:p-4 bg-base-100/80 dark:bg-base-200/80 rounded-l-2xl h-full relative border-l border-gray-200 dark:border-gray-700 ${isMobile ? 'min-h-[88vh] max-h-[88vh]' : ''}`} style={{ maxHeight: '88vh', overflow: 'hidden' }}>
             {/* Sticky Chat Header */}
-            <div className="sticky top-0 z-10 p-3 border-b border-gray-200 dark:border-gray-600 bg-base-100/90 dark:bg-base-200/90 flex items-center gap-3 rounded-tl-2xl shadow-sm">
-              {/* Mobile back button */}
-              {isMobile && selectedUserId && (
-                <button
-                  className="btn btn-circle btn-outline btn-sm mr-2 flex items-center justify-center border-primary text-primary hover:bg-primary hover:text-white transition"
-                  style={{ minWidth: 36, minHeight: 36 }}
-                  onClick={() => {
-                    navigate('/chat');
-                    setSelectedUserId(null);
-                  }}
-                  aria-label="Back to friends list"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-              )}
-              {selectedUserId && (
-                <img
-                  src={filteredConnections.find(c => c._id === selectedUserId)?.photoUrl || "/default-avatar.png"}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full border border-primary shadow bg-base-100 dark:bg-base-200 object-cover"
-                />
-              )}
-              <h1 className="text-lg font-bold text-primary-content dark:text-base-content tracking-wide">
-                {selectedUserId ? (
-                  <Link
-                    to={`/users/${selectedUserId}`}
-                    className="hover:underline hover:text-primary transition-colors duration-200"
+            <div className="sticky top-0 z-10 p-3 border-b border-gray-200 dark:border-gray-600 bg-base-100/90 dark:bg-base-200/90 flex items-center gap-3 rounded-tl-2xl shadow-sm justify-between">
+              <div className="flex items-center gap-3">
+                {/* Mobile back button */}
+                {isMobile && selectedUserId && (
+                  <button
+                    className="btn btn-circle btn-outline btn-sm mr-2 flex items-center justify-center border-primary text-primary hover:bg-primary hover:text-white transition"
+                    style={{ minWidth: 36, minHeight: 36 }}
+                    onClick={() => {
+                      navigate('/chat');
+                      setSelectedUserId(null);
+                    }}
+                    aria-label="Back to friends list"
                   >
-                    {getConnectionName(selectedUserId)}
-                  </Link>
-                ) : (
-                  "Select a Connection"
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
                 )}
-              </h1>
+                {selectedUserId && (
+                  <img
+                    src={filteredConnections.find(c => c._id === selectedUserId)?.photoUrl || "/default-avatar.png"}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full border border-primary shadow bg-base-100 dark:bg-base-200 object-cover relative"
+                  />
+                )}
+                <h1 className="text-lg font-bold text-primary-content dark:text-base-content tracking-wide">
+                  {selectedUserId ? (
+                    <Link
+                      to={`/users/${selectedUserId}`}
+                      className="hover:underline hover:text-primary transition-colors duration-200"
+                    >
+                      {getConnectionName(selectedUserId)}
+                    </Link>
+                  ) : (
+                    "Select a Connection"
+                  )}
+                </h1>
+              </div>
+              {selectedUserId && onlineUsers[selectedUserId] && (
+                <span className="inline-flex items-center text-green-600 text-xs font-semibold">
+                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1 inline-block"></span>Online
+                </span>
+              )}
             </div>
             {/* Show No Connections state in chat area if no connections and no chat selected */}
             {Array.isArray(connections) && connections.length === 0 && !selectedUserId && (
@@ -448,7 +501,7 @@ const Chat = () => {
                         <>
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
-                              <span className="bg-base-300 text-xs text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full shadow">
+                              <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
                                 {getDateLabel(msgDate)}
                               </span>
                             </div>
@@ -509,7 +562,7 @@ const Chat = () => {
                         <>
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
-                              <span className="bg-base-300 text-xs text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full shadow">
+                              <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
                                 {getDateLabel(msgDate)}
                               </span>
                             </div>
@@ -581,7 +634,7 @@ const Chat = () => {
                       <>
                         {showDateSeparator && (
                           <div className="flex justify-center my-2">
-                            <span className="bg-base-300 text-xs text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full shadow">
+                            <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
                               {getDateLabel(msgDate)}
                             </span>
                           </div>
