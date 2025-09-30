@@ -2,11 +2,9 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 import { useSelector, useDispatch } from "react-redux";
 import { FaSortAmountDown, FaSortAmountUp } from "react-icons/fa";
-import { addConnections } from "../utils/conectionSlice";
+import { addConnections } from "../utils/connectionSlice";
 import Spinner from "./Spinner";
 import { toast } from "react-hot-toast";
 
@@ -20,7 +18,7 @@ const BlogPage = () => {
   const [sort, setSort] = useState("desc"); // 'desc' for newest first, 'asc' for oldest first
   const navigate = useNavigate();
   const user = useSelector((store) => store.user.user);
-  const connections = useSelector((store) => store.connections) || [];
+  const { connections = [] } = useSelector((store) => store.connections);
   const dispatch = useDispatch();
   const [fetchingConnections, setFetchingConnections] = useState(false);
 

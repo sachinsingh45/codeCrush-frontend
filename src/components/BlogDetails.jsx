@@ -8,7 +8,7 @@ import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { FaHeart, FaRegHeart, FaPaperPlane, FaWhatsapp, FaTwitter, FaFacebook, FaLink, FaCommentDots, FaShareAlt } from "react-icons/fa";
 import { createSocketConnection } from "../utils/socket";
-import { addConnections } from "../utils/conectionSlice";
+import { addConnections } from "../utils/connectionSlice";
 
 const BlogDetails = () => {
   const { id } = useParams();
@@ -24,7 +24,7 @@ const BlogDetails = () => {
   const [deleteTarget, setDeleteTarget] = useState(null); // 'blog' or commentId
   const [showShare, setShowShare] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
-  const connections = useSelector((store) => store.connections) || [];
+  const { connections = [] } = useSelector((store) => store.connections);
   const blogUrl = window.location.href;
   const shareRef = useRef(null);
   const [fetchingConnections, setFetchingConnections] = useState(false);

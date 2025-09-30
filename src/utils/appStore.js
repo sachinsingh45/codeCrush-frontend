@@ -1,7 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./userSlice";
 import feedReducer from "./feedSlice";
-import connectionReducer from "./conectionSlice";
+import connectionReducer from "./connectionSlice";
 import requestReducer from "./requestSlice";
 
 const appStore = configureStore({
@@ -14,10 +14,6 @@ const appStore = configureStore({
   devTools: process.env.NODE_ENV !== 'production',
 });
 
-// Debug logging for store state changes
-appStore.subscribe(() => {
-  const state = appStore.getState();
-  console.log('Redux state changed:', state);
-});
+// Remove debug logging for production
 
 export default appStore;

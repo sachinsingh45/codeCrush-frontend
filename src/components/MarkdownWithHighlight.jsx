@@ -1,26 +1,13 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Highlight, { defaultProps } from "prism-react-renderer";
 import dracula from "prism-react-renderer/themes/dracula";
 import duotoneLight from "prism-react-renderer/themes/duotoneLight";
+import useTheme from "../utils/useTheme";
 
 function MarkdownWithHighlight({ content }) {
-  // Detect theme
-  const [theme, setTheme] = useState(
-    document.documentElement.getAttribute("data-theme") || "abyss"
-  );
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme"));
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
+  const theme = useTheme();
 
   return (
     <ReactMarkdown

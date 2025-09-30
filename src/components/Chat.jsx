@@ -1,10 +1,10 @@
-import { useEffect, useState, useRef } from "react"; 
+import { useEffect, useState, useRef, Fragment } from "react"; 
 import { useParams, useNavigate } from "react-router-dom";
 import { createSocketConnection } from "../utils/socket";
 import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import { addConnections } from "../utils/conectionSlice";
+import { addConnections, setConnectionLoading, setConnectionError } from "../utils/connectionSlice";
 import { FaBars, FaExternalLinkAlt, FaSpinner } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { FaRegSadTear, FaCommentSlash } from "react-icons/fa"; 
@@ -27,7 +27,7 @@ const Chat = () => {
   const [codeReviewPreviews, setCodeReviewPreviews] = useState({});
 
   const user = useSelector((store) => store.user.user);
-  const connections = useSelector((store) => store.connections);
+  const { connections = [] } = useSelector((store) => store.connections);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -48,15 +48,19 @@ const Chat = () => {
   }, []);
 
   const fetchConnections = async () => {
+    dispatch(setConnectionLoading(true));
     try {
       const res = await axios.get(`${BASE_URL}/user/connections`, {
         withCredentials: true,
       });
       if (res.data?.data) {
         dispatch(addConnections(res.data.data));
+      } else {
+        dispatch(setConnectionError("No connections data received"));
       }
     } catch (err) {
-      console.error("API Error:", err);
+      console.error("Connections fetch error:", err);
+      dispatch(setConnectionError(err.message || "Failed to load connections"));
     }
   };
 
@@ -79,7 +83,7 @@ const Chat = () => {
 
   useEffect(() => {
     fetchConnections();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (selectedUserId) {
@@ -92,23 +96,28 @@ const Chat = () => {
 
     const socket = createSocketConnection();
     socket.emit("joinChat", {
-      firstName: user.firstName,
       userId,
       targetUserId: selectedUserId,
     });
 
     socket.on("messageReceived", ({ firstName, lastName, text, createdAt }) => {
       setMessages((prev) => {
-        // Remove the first pending message that matches text and user
-        const idx = prev.findIndex(
-          (msg) => msg.pending && msg.text === text && msg.firstName === firstName
-        );
-        if (idx !== -1) {
-          const newMsgs = [...prev];
-          newMsgs[idx] = { firstName, lastName, text, createdAt };
-          return newMsgs;
+        if (firstName === user.firstName) {
+          // This is a confirmation of a message sent by the current user
+          const idx = prev.findIndex(
+            (msg) => msg.pending && msg.text === text && msg.firstName === firstName
+          );
+          if (idx !== -1) {
+            const newMsgs = [...prev];
+            newMsgs[idx] = { firstName, lastName, text, createdAt };
+            return newMsgs;
+          }
+        } else {
+          // This is a new message from the other user
+          return [...prev, { firstName, lastName, text, createdAt }];
         }
-        return [...prev, { firstName, lastName, text, createdAt }];
+        // If it's a self-message but no pending version is found, do nothing to avoid duplicates
+        return prev;
       });
     });
 
@@ -316,43 +325,11 @@ const Chat = () => {
   // WhatsApp-style time under message
   const getTimeLabel = (date) => format(date, "p");
 
-  const [onlineUsers, setOnlineUsers] = useState({});
-  const [unseenCounts, setUnseenCounts] = useState({});
+  // Online status and unseen counts removed to simplify chat
 
-  useEffect(() => {
-    if (!userId) return;
-    const socket = createSocketConnection();
-    // Listen for online/offline events
-    socket.on("userOnline", ({ userId: onlineId }) => {
-      setOnlineUsers((prev) => ({ ...prev, [onlineId]: true }));
-    });
-    socket.on("userOffline", ({ userId: offlineId }) => {
-      setOnlineUsers((prev) => {
-        const copy = { ...prev };
-        delete copy[offlineId];
-        return copy;
-      });
-    });
-    // Listen for unseen message counts
-    socket.on("unseenCounts", (counts) => {
-      setUnseenCounts(counts || {});
-    });
-    // Listen for the full list of online users
-    socket.on("onlineUsers", (userIds) => {
-      const onlineMap = {};
-      userIds.forEach(id => { onlineMap[id] = true; });
-      setOnlineUsers(onlineMap);
-    });
-    return () => socket.disconnect();
-  }, [userId]);
+  // Removed online/offline and unseen listeners
 
-  // Emit markAsSeen when chat is opened
-  useEffect(() => {
-    if (!userId || !selectedUserId) return;
-    const socket = createSocketConnection();
-    socket.emit("markAsSeen", { userId, targetUserId: selectedUserId });
-    return () => socket.disconnect();
-  }, [userId, selectedUserId]);
+  // Removed markAsSeen emitter
 
   return (
     <div>
@@ -393,14 +370,7 @@ const Chat = () => {
                     <span className="font-semibold text-primary-content  text-lg">
                       {conn.firstName} {conn.lastName}
                     </span>
-                    {unseenCounts[conn._id] > 0 && (
-                      <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 font-bold">
-                        {unseenCounts[conn._id]}
-                      </span>
-                    )}
-                    {onlineUsers[conn._id] && (
-                      <span className="ml-2 w-2 h-2 bg-green-500 rounded-full inline-block"></span>
-                    )}
+                    {/* Unseen counts and online indicators removed */}
                   </div>
                 ))
               ) : (
@@ -464,11 +434,7 @@ const Chat = () => {
                   )}
                 </h1>
               </div>
-              {selectedUserId && onlineUsers[selectedUserId] && (
-                <span className="inline-flex items-center text-green-600 text-xs font-semibold">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1 inline-block"></span>Online
-                </span>
-              )}
+              {/* Online indicator removed */}
             </div>
             {/* Show No Connections state in chat area if no connections and no chat selected */}
             {Array.isArray(connections) && connections.length === 0 && !selectedUserId && (
@@ -505,7 +471,7 @@ const Chat = () => {
                       const blogId = extractBlogId(blogLink);
                       const preview = blogPreviews[blogId];
                       elements.push(
-                        <>
+                        <Fragment key={`blog-${index}`}>
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
                               <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
@@ -513,7 +479,7 @@ const Chat = () => {
                               </span>
                             </div>
                           )}
-                          <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                          <div className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
                             <div
                               className="chat-bubble bg-base-100 dark:bg-base-200 border border-primary shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl"
                               onClick={() => handleBlogCardClick(blogId)}
@@ -558,7 +524,7 @@ const Chat = () => {
                               {getTimeLabel(msgDate)}
                             </div>
                           </div>
-                        </>
+                        </Fragment>
                       );
                       return elements;
                     }
@@ -567,7 +533,7 @@ const Chat = () => {
                       const snippetId = extractSnippetId(codeReviewLink);
                       const preview = codeReviewPreviews[snippetId];
                       elements.push(
-                        <>
+                        <Fragment key={`code-${index}`}>
                           {showDateSeparator && (
                             <div className="flex justify-center my-2">
                               <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
@@ -575,7 +541,7 @@ const Chat = () => {
                               </span>
                             </div>
                           )}
-                          <div key={index} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                          <div className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
                             <div
                               className="chat-bubble bg-base-100 dark:bg-base-200 border border-purple-500 shadow p-0 overflow-hidden max-w-xs md:max-w-sm cursor-pointer hover:shadow-lg hover:scale-[1.01] transition-all rounded-xl relative"
                               onClick={() => snippetId && navigate(`/code-review/${snippetId}`)}
@@ -602,13 +568,17 @@ const Chat = () => {
                                     <Highlight {...defaultProps} code={preview.data.code} language={preview.data.language || "javascript"} theme={document.documentElement.getAttribute('data-theme') === 'lemonade' ? duotoneLight : dracula}>
                                       {({ className, style, tokens, getLineProps, getTokenProps }) => (
                                         <pre className={className + " rounded p-2 text-xs overflow-x-auto max-h-24 mb-1 bg-base-200 border border-base-300"} style={style}>
-                                          {tokens.map((line, i) => (
-                                            <div key={i} {...getLineProps({ line, key: i })}>
-                                              {line.map((token, key) => (
-                                                <span key={key} {...getTokenProps({ token, key })} />
-                                              ))}
-                                            </div>
-                                          ))}
+                                          {tokens.map((line, i) => {
+                                            const { key, ...lineProps } = getLineProps({ line, key: i });
+                                            return (
+                                              <div key={i} {...lineProps}>
+                                                {line.map((token, tokenKey) => {
+                                                  const { key: tokenKeyProp, ...tokenProps } = getTokenProps({ token, key: tokenKey });
+                                                  return <span key={tokenKey} {...tokenProps} />;
+                                                })}
+                                              </div>
+                                            );
+                                          })}
                                         </pre>
                                       )}
                                     </Highlight>
@@ -633,14 +603,14 @@ const Chat = () => {
                               {getTimeLabel(msgDate)}
                             </div>
                           </div>
-                        </>
+                        </Fragment>
                       );
                       return elements;
                     }
                     // For default message bubble:
                     const messageKey = msg._tempId ? `pending-${msg._tempId}` : `msg-${index}`;
                     elements.push(
-                      <>
+                      <Fragment key={messageKey}>
                         {showDateSeparator && (
                           <div className="flex justify-center my-2">
                             <span className="badge badge-ghost px-3 py-1 text-xs font-semibold shadow">
@@ -648,7 +618,7 @@ const Chat = () => {
                             </span>
                           </div>
                         )}
-                        <div key={messageKey} className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
+                        <div className={`chat ${user.firstName === msg.firstName ? "chat-end" : "chat-start"} transition-all duration-200`}>
                           {user.firstName !== msg.firstName ? (
                             <div className="chat-header text-xs font-semibold opacity-80 mb-1">
                               {msg.firstName} {msg.lastName}
@@ -675,11 +645,11 @@ const Chat = () => {
                             {getTimeLabel(msgDate)}
                           </div>
                         </div>
-                      </>
+                      </Fragment>
                     );
                     return elements;
                   }, []);
-                })()
+                })()  
               ) : (
                 <div className="flex flex-col relative items-center bg-base-300 p-4 sm:p-6 rounded-lg shadow w-full text-center">
                   <FaCommentSlash className="text-4xl sm:text-5xl text-base-content mb-2" />

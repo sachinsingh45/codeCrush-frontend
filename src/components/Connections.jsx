@@ -2,14 +2,16 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addConnections } from "../utils/conectionSlice";
+import { addConnections, setConnectionLoading, setConnectionError } from "../utils/connectionSlice";
 import { Link } from "react-router-dom";
+import Spinner from "./Spinner";
 
 const Connections = () => {
-  const connections = useSelector((store) => store.connections);
+  const { connections, loading, error } = useSelector((store) => store.connections);
   const dispatch = useDispatch();
 
   const fetchConnections = async () => {
+    dispatch(setConnectionLoading(true));
     try {
       const res = await axios.get(`${BASE_URL}/user/connections`, {
         withCredentials: true,
@@ -18,19 +20,30 @@ const Connections = () => {
       if (res.data && res.data.data) {
         dispatch(addConnections(res.data.data));
       } else {
-        console.error("Invalid API response structure:", res.data);
+        dispatch(setConnectionError("Invalid API response structure"));
       }
     } catch (err) {
-      console.error("API Error:", err);
+      dispatch(setConnectionError(err.message || "Failed to load connections"));
     }
   };
 
   useEffect(() => {
     fetchConnections();
-  }, []);
+  }, [dispatch]);
 
-  if (!connections)
-    return <h1 className="text-center text-base-content">Loading...</h1>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spinner size={48} />
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-red-500 text-center text-lg">{error}</div>
+      </div>
+    );
 
   if (connections.length === 0)
     return (

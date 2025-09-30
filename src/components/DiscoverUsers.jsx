@@ -1,35 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css";
 import UserCard from "./UserCard";
 import Spinner from "./Spinner";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { addFeed, setFeedLoading, setFeedError } from "../utils/feedSlice";
 import { toast } from "react-hot-toast";
 
 const DiscoverUsers = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const dispatch = useDispatch();
+  const { users, loading, error } = useSelector((store) => store.feed);
   const loggedInUser = useSelector((store) => store.user.user);
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
-      setError("");
+      dispatch(setFeedLoading(true));
       try {
         const res = await axios.get(`${BASE_URL}/feed`, { withCredentials: true });
-        setUsers(res.data.data);
+        dispatch(addFeed(res.data.data));
       } catch (err) {
-        setError(err?.response?.data?.message || "Failed to load users");
+        const errorMessage = err?.response?.data?.message || "Failed to load users";
+        dispatch(setFeedError(errorMessage));
         toast.error(err.message || 'An error occurred');
-      } finally {
-        setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [dispatch]);
 
   const filteredUsers = (users || []).filter(user => user._id !== loggedInUser?._id);
 

@@ -15,8 +15,9 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github.css";
 import { createSocketConnection } from "../utils/socket";
-import { addConnections } from "../utils/conectionSlice";
+import { addConnections } from "../utils/connectionSlice";
 import MarkdownWithHighlight from "./MarkdownWithHighlight";
+import useTheme from "../utils/useTheme";
 
 const CodeReviewDetails = () => {
   const { id } = useParams();
@@ -31,13 +32,12 @@ const CodeReviewDetails = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
-  const connections = useSelector((store) => store.connections) || [];
+  const { connections = [] } = useSelector((store) => store.connections);
   const dispatch = useDispatch();
   const [fetchingConnections, setFetchingConnections] = useState(false);
   const shareRef = useRef(null);
   const snippetUrl = window.location.href;
-  // Detect theme
-  const [theme, setTheme] = useState(document.documentElement.getAttribute('data-theme') || 'abyss');
+  const theme = useTheme();
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({ code: '', description: '', tags: '', language: 'javascript' });
 
@@ -121,11 +121,24 @@ const CodeReviewDetails = () => {
     }
   };
 
+  // Check if there are enough reviews for AI summary
+  const canGenerateAISummary = snippet?.reviews?.length >= 3;
+  const reviewsNeeded = 3 - (snippet?.reviews?.length || 0);
+
   // Generate AI summary
   const handleAISummary = async () => {
+    if (!canGenerateAISummary) {
+      toast.warning(`You need ${reviewsNeeded} more review(s) to generate an AI summary.`);
+      return;
+    }
+    
     setAiLoading(true);
     try {
-      const res = await axios.post(`${BASE_URL}/code-review/snippet/${snippet._id}/ai-summary`, {}, { withCredentials: true });
+      const res = await axios.post(
+        `${BASE_URL}/code-review/snippet/${snippet._id}/ai-summary`, 
+        {}, 
+        { withCredentials: true }
+      );
       setAiSummary(res.data.summary);
       toast.success("AI summary generated!");
     } catch (err) {
@@ -480,14 +493,32 @@ const CodeReviewDetails = () => {
           </div>
         </div>
       )}
-      <button
-        className="btn btn-info mb-4"
-        onClick={handleAISummary}
-        disabled={aiLoading || !snippet.reviews || snippet.reviews.length < 3}
-        style={{ pointerEvents: aiLoading || !snippet.reviews || snippet.reviews.length < 3 ? 'none' : 'auto' }}
-      >
-        {aiLoading ? <Spinner size={20} /> : aiSummary ? "Recalculate AI Summary" : "Generate AI Summary"}
-      </button>
+      <div className="relative inline-block">
+        <button
+          className={`btn ${aiLoading || !snippet.reviews || snippet.reviews.length < 3 ? 'btn-disabled' : 'btn-info'} mb-4`}
+          onClick={handleAISummary}
+          disabled={aiLoading || !snippet.reviews || snippet.reviews.length < 3}
+          title={!snippet.reviews || snippet.reviews.length < 3 ? `AI summary requires at least 3 reviews (${snippet.reviews?.length || 0}/3)` : 'Generate AI summary'}
+        >
+          {aiLoading ? (
+            <span className="flex items-center gap-2">
+              <span className="loading loading-spinner loading-sm"></span>
+              Generating...
+            </span>
+          ) : !snippet.reviews || snippet.reviews.length < 3 ? (
+            `Need ${3 - (snippet.reviews?.length || 0)} more reviews`
+          ) : aiSummary ? (
+            'Regenerate AI Summary'
+          ) : (
+            'Generate AI Summary'
+          )}
+        </button>
+        {(!snippet.reviews || snippet.reviews.length < 3) && (
+          <div className="absolute z-10 mt-2 w-64 p-2 text-sm text-gray-700 bg-white border border-gray-200 rounded-md shadow-lg">
+            AI summary requires at least 3 reviews. Currently has {snippet.reviews?.length || 0} review(s).
+          </div>
+        )}
+      </div>
       <h2 className="text-xl font-bold mt-4 mb-2">Reviews</h2>
       <div className="space-y-4 mb-4">
         {snippet.reviews?.length === 0 && (

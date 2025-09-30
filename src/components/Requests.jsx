@@ -1,14 +1,15 @@
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import { useDispatch, useSelector } from "react-redux";
-import { addRequests, removeRequest } from "../utils/requestSlice";
+import { addRequests, removeRequest, setRequestLoading, setRequestError } from "../utils/requestSlice";
 import { useEffect } from "react";
 import { FaRegSadTear, FaUserPlus, FaUserTimes } from "react-icons/fa"; 
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import Spinner from "./Spinner";
 
 const Requests = () => {
-  const requests = useSelector((store) => store.requests);
+  const { requests, loading, error } = useSelector((store) => store.requests);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -25,27 +26,39 @@ const Requests = () => {
       fetchRequests();
     } catch (err) {
       toast.error(err.message || 'An error occurred');
-      console.error("Error reviewing request:", err);
     }
   };
 
   const fetchRequests = async () => {
+    dispatch(setRequestLoading(true));
     try {
       const res = await axios.get(`${BASE_URL}/user/requests/received`, {
         withCredentials: true,
       });
       dispatch(addRequests(res.data.data));
     } catch (err) {
+      dispatch(setRequestError(err.message || 'Failed to load requests'));
       toast.error(err.message || 'An error occurred');
-      console.error("Error fetching requests:", err);
     }
   };
 
   useEffect(() => {
     fetchRequests();
-  }, []);
+  }, [dispatch]);
 
-  if (!requests) return null;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spinner size={48} />
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-red-500 text-center text-lg">{error}</div>
+      </div>
+    );
 
   return (
     <div className="mt-20 flex flex-col items-center my-10 px-2 sm:px-4">

@@ -14,20 +14,14 @@ const Body = () => {
   const { user: userData, loading, error } = useSelector((store) => store.user);
   const location = useLocation();
 
-  // Debug logging
-  console.log('Body component render:', { userData, loading, error });
-
   const fetchUser = async () => {
     try {
-      console.log('Fetching user...');
       dispatch(setLoading(true));
       const res = await axios.get(BASE_URL + "/profile/view", {
         withCredentials: true,
       });
-      console.log('User fetch successful:', res.data);
       dispatch(addUser(res.data));
     } catch (err) {
-      console.error("Authentication error:", err);
       // Only set error if it's not a 401 (unauthorized)
       if (err.response?.status !== 401) {
         dispatch(setError(err.message));
@@ -39,7 +33,6 @@ const Body = () => {
   };
 
   useEffect(() => {
-    console.log('Body useEffect triggered');
     fetchUser();
   }, []);
 
@@ -50,7 +43,6 @@ const Body = () => {
 
   // Show loading spinner while checking authentication
   if (loading) {
-    console.log('Showing loading spinner');
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Spinner size={48} />
@@ -60,7 +52,6 @@ const Body = () => {
 
   // Show error message if there's an error
   if (error) {
-    console.log('Showing error message:', error);
     return (
       <div className="flex flex-col justify-center items-center min-h-screen">
         <div className="text-red-500 text-center text-lg mb-4">
@@ -76,7 +67,6 @@ const Body = () => {
     );
   }
 
-  console.log('Rendering main app content');
   return (
     <div>
       <NavBar />

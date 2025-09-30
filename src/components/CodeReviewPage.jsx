@@ -9,6 +9,7 @@ import dracula from "prism-react-renderer/themes/dracula";
 import duotoneLight from "prism-react-renderer/themes/duotoneLight";
 import { toast } from "react-toastify";
 import MarkdownWithHighlight from "./MarkdownWithHighlight";
+import useTheme from "../utils/useTheme";
 
 const CodeReviewPage = () => {
   const user = useSelector((store) => store.user.user);
@@ -30,21 +31,7 @@ const CodeReviewPage = () => {
   const [sort, setSort] = useState("recent");
   const [filter, setFilter] = useState("all"); // 'all', 'mine'
   const navigate = useNavigate();
-  // Detect theme
-  const [theme, setTheme] = useState(
-    document.documentElement.getAttribute("data-theme") || "abyss"
-  );
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute("data-theme"));
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-    return () => observer.disconnect();
-  }, []);
+  const theme = useTheme();
 
   // Fetch all snippets
   const fetchSnippets = async (sortOption = sort) => {

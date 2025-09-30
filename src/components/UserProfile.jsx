@@ -4,8 +4,9 @@ import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import Spinner from "./Spinner";
 import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt, FaLinkedin, FaGithub } from "react-icons/fa";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "react-toastify";
+import { addConnections, setConnectionLoading, setConnectionError } from "../utils/connectionSlice";
 
 const statIcons = [
   <FaBlog className="text-blue-500 text-xl mx-auto" />,
@@ -19,14 +20,32 @@ const statIcons = [
 const UserProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const connections = useSelector((store) => store.connections) || [];
+  const dispatch = useDispatch();
+  const { connections = [] } = useSelector((store) => store.connections);
   const loggedInUser = useSelector((store) => store.user.user);
   const [user, setUser] = useState(null);
   const [stats, setStats] = useState(null);
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [relationship, setRelationship] = useState('unknown');
+  useEffect(() => {
+    const fetchConnections = async () => {
+      if (connections.length === 0) {
+        dispatch(setConnectionLoading(true));
+        try {
+          const res = await axios.get(`${BASE_URL}/user/connections`, { withCredentials: true });
+          if (res.data?.data) {
+            dispatch(addConnections(res.data.data));
+          }
+        } catch (err) {
+          dispatch(setConnectionError(err.message || "Failed to load connections"));
+        } finally {
+          dispatch(setConnectionLoading(false));
+        }
+      }
+    };
+    fetchConnections();
+  }, [connections, dispatch]);
 
   useEffect(() => {
     if (!id) return;
@@ -34,16 +53,8 @@ const UserProfile = () => {
       setLoading(true);
       setError("");
       try {
-        const [userRes, statsRes, blogsRes, relRes] = await Promise.all([
-          axios.get(`${BASE_URL}/users/${id}`),
-          axios.get(`${BASE_URL}/users/${id}/blog-stats`),
-          axios.get(`${BASE_URL}/users/${id}/blogs`),
-          axios.get(`${BASE_URL}/user/relationship/${id}`, { withCredentials: true })
-        ]);
+        const userRes = await axios.get(`${BASE_URL}/users/${id}`);
         setUser(userRes.data.data);
-        setStats(statsRes.data.data);
-        setBlogs(blogsRes.data.data);
-        setRelationship(relRes.data.status);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load user profile");
       } finally {
@@ -139,33 +150,31 @@ const UserProfile = () => {
       </div>
 
       {/* Relationship Actions */}
-      {isFriend ? (
-        <div className="flex justify-center mb-8">
+      <div className="flex justify-center mb-8">
+        {isFriend ? (
           <button
             className="btn btn-primary px-6 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition flex items-center gap-2"
             onClick={() => navigate(`/chat/${id}`)}
           >
             <FaComment className="mr-2" /> Chat
           </button>
-        </div>
-      ) : relationship === 'unknown' ? (
-        <div className="flex justify-center mb-8">
+        ) : (
           <button
             className="btn btn-success px-6 py-2 rounded-full font-semibold shadow-md hover:scale-105 transition flex items-center gap-2"
             onClick={async () => {
               try {
                 const res = await axios.post(`${BASE_URL}/request/send/${id}`, {}, { withCredentials: true });
-                setRelationship('request_sent');
                 toast.success(res.data.message || 'Connection request sent!');
+                // You might want to update the UI to show 'Request Sent' or disable the button
               } catch (err) {
                 toast.error(err?.response?.data?.message || 'Failed to send connection request.');
               }
             }}
           >
-            <FaUser className="mr-2" /> Request
+            <FaUser className="mr-2" /> Send Request
           </button>
-        </div>
-      ) : null}
+        )}
+      </div>
 
       {/* Blog Stats Section */}
       <div className="mt-10">
