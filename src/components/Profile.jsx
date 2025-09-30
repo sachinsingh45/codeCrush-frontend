@@ -1,5 +1,4 @@
 import { useSelector } from "react-redux";
-import EditProfile from "./EditProfile";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
@@ -7,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import Spinner from "./Spinner";
 import { FaUser, FaBirthdayCake, FaVenusMars, FaBlog, FaHeart, FaComment, FaShareAlt, FaCheckCircle, FaRegFileAlt, FaEdit, FaFolderOpen, FaLinkedin, FaGithub, FaPaperPlane } from "react-icons/fa";
 import UserCard from "./UserCard";
+import { toast } from "react-toastify";
 
 const statIcons = [
   <FaBlog className="text-blue-500 text-xl mx-auto" />,
@@ -53,7 +53,7 @@ const Profile = () => {
           setReviewStats(null);
         }
       } catch (err) {
-        setError(err?.response?.data?.message || "Failed to load profile data");
+        toast.error(err?.response?.data?.message || "Failed to load profile data");
       } finally {
         setLoading(false);
       }
@@ -63,7 +63,6 @@ const Profile = () => {
 
   if (!user) return null;
   if (loading) return <div className="flex justify-center items-center min-h-[300px]"><Spinner size={48} /></div>;
-  if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
 
   // Defensive: always default blogs to an array
   const safeBlogs = Array.isArray(blogs) ? blogs : [];

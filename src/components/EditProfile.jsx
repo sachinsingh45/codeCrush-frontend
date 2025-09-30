@@ -5,6 +5,7 @@ import { BASE_URL } from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 const EditProfile = ({ user, onClose }) => {
   const [firstName, setFirstName] = useState(user.firstName);
@@ -17,14 +18,12 @@ const EditProfile = ({ user, onClose }) => {
   const [newSkill, setNewSkill] = useState("");
   const [linkedin, setLinkedin] = useState(user.linkedin || "");
   const [github, setGithub] = useState(user.github || "");
-  const [error, setError] = useState("");
   const [showToast, setShowToast] = useState(false);
   const dispatch = useDispatch();
 
   const previewRef = useRef(null); // Create reference for the preview card section
 
   const saveProfile = async () => {
-    setError("");
     try {
       const res = await axios.patch(
         `${BASE_URL}/profile/edit`,
@@ -32,11 +31,12 @@ const EditProfile = ({ user, onClose }) => {
         { withCredentials: true }
       );
       dispatch(addUser(res?.data?.data));
+      toast.success("Profile updated successfully!");
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3000);
       if (onClose) onClose();
     } catch (err) {
-      setError(err.response?.data?.message || "An error occurred");
+      toast.error(err.response?.data?.message || "An error occurred");
     }
   };
 
@@ -203,7 +203,6 @@ const EditProfile = ({ user, onClose }) => {
             </div>
           </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="flex gap-2 w-full justify-end mt-2">
             <button className="btn btn-sm bg-amber-600 text-white" onClick={saveProfile}>
               Save

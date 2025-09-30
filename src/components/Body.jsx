@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addUser, setLoading, setError, removeUser } from "../utils/userSlice";
 import { useEffect } from "react";
 import Spinner from "./Spinner";
+import { toast } from "react-toastify";
 
 const Body = () => {
   const dispatch = useDispatch();
@@ -22,8 +23,9 @@ const Body = () => {
       });
       dispatch(addUser(res.data));
     } catch (err) {
-      // Only set error if it's not a 401 (unauthorized)
+      // Only show error if it's not a 401 (unauthorized)
       if (err.response?.status !== 401) {
+        toast.error(err.message || "Failed to fetch user data");
         dispatch(setError(err.message));
       } else {
         // For 401, just remove user without error
@@ -50,18 +52,15 @@ const Body = () => {
     );
   }
 
-  // Show error message if there's an error
+  // If there's a persistent error, just show retry option without displaying the error
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen">
-        <div className="text-red-500 text-center text-lg mb-4">
-          Connection Error: {error}
-        </div>
         <button
           className="btn btn-primary"
           onClick={() => window.location.reload()}
         >
-          Retry
+          Retry Connection
         </button>
       </div>
     );

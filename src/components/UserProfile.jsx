@@ -56,6 +56,7 @@ const UserProfile = () => {
         const userRes = await axios.get(`${BASE_URL}/users/${id}`);
         setUser(userRes.data.data);
       } catch (err) {
+        toast.error(err?.response?.data?.message || "Failed to load user profile");
         setError(err?.response?.data?.message || "Failed to load user profile");
       } finally {
         setLoading(false);
@@ -73,8 +74,7 @@ const UserProfile = () => {
   }, [loggedInUser, id, navigate]);
 
   if (loading) return <div className="flex justify-center items-center min-h-[300px]"><Spinner size={48} /></div>;
-  if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
-  if (!user) return null;
+  if (error || !user) return <div className="text-center mt-10"><button className="btn btn-primary" onClick={() => navigate(-1)}>Go Back</button></div>;
 
   // Check if the viewed user is a friend/connection
   const isFriend = connections.some(conn => conn._id === id);

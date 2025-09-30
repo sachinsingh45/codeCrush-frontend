@@ -5,6 +5,7 @@ import { addUser } from "../utils/userSlice";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../utils/constants";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [emailId, setEmailId] = useState("");
@@ -12,7 +13,6 @@ const Login = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isLoginForm, setIsLoginForm] = useState(true);
-  const [error, setError] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false); // State for password visibility
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ const Login = () => {
       dispatch(addUser(res.data));
       navigate("/");
     } catch (err) {
-      setError(err?.response?.data || "Something went wrong");
+      toast.error(err?.response?.data || "Something went wrong");
     }
   };
 
@@ -41,7 +41,7 @@ const Login = () => {
       dispatch(addUser(res.data.data));
       navigate("/profile");
     } catch (err) {
-      setError(err?.response?.data || "Something went wrong");
+      toast.error(err?.response?.data || "Something went wrong");
     }
   };
 
@@ -136,7 +136,6 @@ const Login = () => {
               </div>
             </label>
           </div>
-          <p className="text-error text-center my-2">{error}</p>
           <div className="card-actions justify-center mt-6">
             <button
               className="btn btn-primary w-full py-3"
