@@ -48,7 +48,6 @@ CodeCrush is a platform where coders and developers can **connect and communicat
 - **Review Upvoting** to highlight quality feedback
 - **AI-Powered Summaries** of top reviews (requires 3+ reviews)
 - **Code Highlighting** with syntax highlighting
-- **Review Statistics** and user performance tracking
 - **Code Snippet Management** - edit and update submissions
 - **Code Review Details** with full snippet and review display
 
